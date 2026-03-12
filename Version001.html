@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Address Pinner</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f2eb; --ink: #1a1a2e; --card: #fff;
+  --border: #d4cfc4; --accent: #ff5c35; --muted: #8c8880; --green: #27ae60;
+}
+body {
+  font-family: 'IBM Plex Mono', monospace;
+  background: var(--bg); min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 24px 16px 60px;
+}
+.wrapper { width: 100%; max-width: 1100px; }
+h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -1px; margin-bottom: 4px; }
+.subtitle { font-size: 10px; color: var(--muted); margin-bottom: 20px; letter-spacing: 0.5px; }
+.top-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
+.left { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+.right { flex: 1; min-width: 0; }
+.bottom-row { display: flex; flex-direction: column; gap: 12px; }
+@media (max-width: 680px) {
+  body { padding: 16px 12px 40px; }
+  .top-row { flex-direction: column; }
+  .left { width: 100%; }
+  .right { width: 100%; }
+  #addrTextarea { height: 130px; }
+}
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
+.card-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.card-hint { font-size: 11px; color: var(--muted); margin-bottom: 12px; line-height: 1.6; }
+#addrTextarea {
+  width: 100%; height: 200px;
+  background: var(--bg); border: 2px solid var(--border); border-radius: 10px;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink);
+  padding: 12px 14px; outline: none; resize: vertical; line-height: 1.7;
+  transition: border-color .2s;
+}
+#addrTextarea:focus { border-color: var(--accent); }
+#addrTextarea::placeholder { color: #bbb; }
+#counter { font-size: 10px; color: var(--muted); margin-top: 5px; margin-bottom: 12px; }
+#counter b { color: var(--ink); }
+.btn-row { display: flex; gap: 8px; }
+button.primary {
+  flex: 1; background: var(--ink); color: #fff; border: none;
+  border-radius: 9px; padding: 12px;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: background .15s; -webkit-appearance: none;
+}
+button.primary:hover:not(:disabled) { background: var(--accent); }
+button.primary:disabled { opacity: .4; cursor: not-allowed; }
+button.secondary {
+  background: transparent; color: var(--muted); border: 1.5px solid var(--border);
+  border-radius: 9px; padding: 12px 16px;
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all .15s; -webkit-appearance: none;
+}
+button.secondary:hover { border-color: var(--ink); color: var(--ink); }
+#progressWrap { display: none; margin-top: 12px; }
+#progressWrap.on { display: block; }
+#progressBar { background: var(--border); border-radius: 99px; height: 5px; overflow: hidden; }
+#progressFill { height: 100%; background: var(--accent); border-radius: 99px; width: 0%; transition: width .3s; }
+#progressLabel { font-size: 10px; color: var(--muted); margin-top: 6px; }
+#mapEl {
+  width: 100%; height: 480px;
+  border-radius: 14px; border: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgba(0,0,0,.05); display: block;
+}
+@media (max-width: 680px) { #mapEl { height: 300px; border-radius: 10px; } }
+#resultsCard { display: none; }
+#resultsCard.on { display: block; }
+.results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.r-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 9px; font-size: 11px;
+}
+.r-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.r-name { flex: 1; color: var(--ink); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r-item { cursor: pointer; user-select: none; }
+.r-item.selected { border-color: var(--accent); background: rgba(255,92,53,.06); }
+.r-check { width: 16px; height: 16px; border-radius: 4px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.r-item.selected .r-check { background: var(--accent); border-color: var(--accent); }
+.r-tag { font-size: 10px; padding: 2px 7px; border-radius: 99px; flex-shrink: 0; }
+.r-tag.ok { background: rgba(39,174,96,.12); color: var(--green); }
+.r-tag.fail { background: rgba(231,76,60,.1); color: #e74c3c; }
+/* Map wrap & controls */
+.map-wrap { position: relative; }
+.map-controls { position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; }
+.map-btn { width: 34px; height: 34px; border-radius: 8px; background: #fff; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,.12); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; transition: background .15s; -webkit-appearance: none; }
+.map-btn:hover { background: var(--bg); }
+.map-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.loc-dot { width: 16px; height: 16px; border-radius: 50%; background: #2980b9; border: 2px solid #fff; box-shadow: 0 0 0 0 rgba(41,128,185,0.5); animation: loc-pulse 2s infinite; }
+@keyframes loc-pulse { 0% { box-shadow: 0 0 0 0 rgba(41,128,185,0.5); } 70% { box-shadow: 0 0 0 12px rgba(41,128,185,0); } 100% { box-shadow: 0 0 0 0 rgba(41,128,185,0); } }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <h1>Address Pinner</h1>
+  <p class="subtitle">PASTE UP TO 100 ADDRESSES — ONE PER LINE — PIN THEM ALL ON THE MAP</p>
+  <div class="top-row">
+    <div class="left">
+      <div class="card">
+        <div class="card-title">Your addresses</div>
+        <div class="card-hint">One address per line. Include postcode for best accuracy.</div>
+        <textarea id="addrTextarea" placeholder="10 Downing Street, SW1A 2AA&#10;221B Baker Street, NW1 6XE&#10;1 Princes St, Edinburgh EH2 2ER"></textarea>
+        <div id="counter"><b>0</b> / 100 addresses</div>
+        <div class="btn-row">
+          <button class="primary" id="pinBtn">&#128205; Pin All</button>
+          <button class="secondary" id="clearBtn">Clear</button>
+        </div>
+        <div id="progressWrap">
+          <div id="progressBar"><div id="progressFill"></div></div>
+          <div id="progressLabel">Starting...</div>
+        </div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="map-wrap">
+        <div id="mapEl"></div>
+        <div class="map-controls">
+          <button class="map-btn" id="locateBtn" title="My location">📍</button>
+          <button class="map-btn" id="rotateBtn" title="Rotate map">🧭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-row">
+    <div class="card" id="resultsCard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;">
+        <div class="card-title">Results</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span id="selCount" style="font-size:10px;color:var(--muted);display:none;"></span>
+          <button class="secondary" id="selAllBtn" style="display:none;padding:7px 12px;font-size:11px;">Select all</button>
+          <button class="secondary" id="copyBtn" style="display:none;padding:7px 14px;font-size:11px;">&#128203; Copy all</button>
+          <button class="primary" id="copySelBtn" style="display:none;padding:7px 14px;font-size:11px;">&#128203; Copy selected</button>
+        </div>
+      </div>
+      <div class="results-grid" id="resultsWrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var sortedUnique = [];
+  var MAX = 100;
+  var pins = [];
+
+  var COLORS = [
+    '#ff5c35','#1a8a3a','#2980b9','#8e44ad','#e67e22',
+    '#16a085','#c0392b','#2471a3','#6c3483','#d35400',
+    '#1abc9c','#2c3e50','#e74c3c','#1a5276','#7d6608',
+    '#6c5ce7','#00b894','#e91e63','#0288d1','#558b2f',
+    '#ff5c35','#1a8a3a','#2980b9','#8e44ad','#e67e22',
+    '#16a085','#c0392b','#2471a3','#6c3483','#d35400',
+    '#1abc9c','#2c3e50','#e74c3c','#1a5276','#7d6608',
+    '#6c5ce7','#00b894','#e91e63','#0288d1','#558b2f',
+    '#ff5c35','#1a8a3a','#2980b9','#8e44ad','#e67e22',
+    '#16a085','#c0392b','#2471a3','#6c3483','#d35400'
+  ];
+
+  // ── Map ──────────────────────────────────────────────────────────────────
+  var map = L.map('mapEl', { attributionControl: false, zoomControl: true, rotate: true, touchRotate: true });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19
+  }).addTo(map);
+  map.setView([54.5, -3], 5);
+  setTimeout(function () { map.invalidateSize(); }, 250);
+  window.addEventListener('resize', function () { map.invalidateSize(); });
+
+  // ── Live location ─────────────────────────────────────────────────────────
+  var locMarker = null;
+  var watchId   = null;
+
+  document.getElementById('locateBtn').addEventListener('click', function () {
+    var btn = this;
+    if (watchId !== null) {
+      // Turn off
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+      if (locMarker) { locMarker.remove(); locMarker = null; }
+      btn.classList.remove('active');
+      btn.title = 'My location';
+      return;
+    }
+    if (!navigator.geolocation) { alert('Geolocation not supported by your browser.'); return; }
+    btn.textContent = '⏳';
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      btn.textContent = '📍';
+      btn.classList.add('active');
+      btn.title = 'Stop tracking';
+      placeLocDot(pos.coords.latitude, pos.coords.longitude);
+      map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+    }, function () {
+      btn.textContent = '📍';
+      alert('Could not get your location. Check browser permissions.');
+    }, { enableHighAccuracy: true });
+
+    watchId = navigator.geolocation.watchPosition(function (pos) {
+      placeLocDot(pos.coords.latitude, pos.coords.longitude);
+    }, null, { enableHighAccuracy: true });
+  });
+
+  function placeLocDot(lat, lon) {
+    var icon = L.divIcon({ className: '', html: '<div class="loc-dot"></div>', iconSize: [16,16], iconAnchor: [8,8] });
+    if (locMarker) { locMarker.setLatLng([lat, lon]); }
+    else { locMarker = L.marker([lat, lon], { icon: icon, zIndexOffset: 9000 }).addTo(map); }
+  }
+
+  // ── Map rotation ──────────────────────────────────────────────────────────
+  var mapBearing = 0;
+  document.getElementById('rotateBtn').addEventListener('click', function () {
+    mapBearing = (mapBearing + 45) % 360;
+    map.setBearing(mapBearing);
+    this.style.transform = 'rotate(' + (-mapBearing) + 'deg)';
+    this.classList.toggle('active', mapBearing !== 0);
+  });
+
+  // ── Pin icon ──────────────────────────────────────────────────────────────
+  function makeIcon(color, num, highlighted) {
+    var size = highlighted ? 36 : 28;
+    var shadow = highlighted
+      ? '0 2px 12px rgba(0,0,0,.6), 0 0 0 3px #fff'
+      : '0 2px 8px rgba(0,0,0,.4)';
+    return L.divIcon({
+      className: '',
+      html: '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:' + color + ';border:2px solid #fff;box-shadow:' + shadow + ';display:flex;align-items:center;justify-content:center;transition:all .2s;"><span style="transform:rotate(45deg);font-size:' + (highlighted ? 12 : 10) + 'px;font-weight:700;color:#fff;line-height:1;">' + num + '</span></div>',
+      iconSize: [size, size], iconAnchor: [size/2, size], popupAnchor: [0, -size - 4]
+    });
+  }
+
+  function refreshMapHighlights() {
+    var hasSelection = Object.keys(selectedAddrs).length > 0;
+    pins.forEach(function (p) {
+      if (!p.marker) return;
+      var isSelected = !!selectedAddrs[p.addr];
+      if (!hasSelection) {
+        // Nothing selected — all normal
+        p.marker.setOpacity(1);
+        p.marker.setIcon(makeIcon(p.color, p.num, false));
+      } else if (isSelected) {
+        p.marker.setOpacity(1);
+        p.marker.setIcon(makeIcon(p.color, p.num, true));
+        p.marker.setZIndexOffset(1000);
+      } else {
+        p.marker.setOpacity(0.25);
+        p.marker.setIcon(makeIcon(p.color, p.num, false));
+        p.marker.setZIndexOffset(0);
+      }
+    });
+  }
+
+  // ── Address helpers ───────────────────────────────────────────────────────
+  function streetKey(addr) {
+    var s = addr.trim();
+    // Strip flat/apartment prefix
+    s = s.replace(/^(flat|apartment|apt|unit|room|floor)\s+[\w-]+[,\s]+/i, '').trim();
+    // Strip leading house number
+    s = s.replace(/^\d+[\da-z-]*\s+/i, '').trim();
+    // Strip UK postcode anywhere in string
+    s = s.replace(/\b[A-Z]{1,2}[0-9][0-9A-Z]?\s*[0-9][A-Z]{2}\b/gi, '').trim();
+    // Take first meaningful word-group — strip trailing city/county noise
+    // Split on 2+ spaces (common in these addresses) or comma
+    var parts = s.split(/,|  +/);
+    return parts[0].trim().toLowerCase();
+  }
+  function houseNumber(addr) {
+    var s = addr.trim();
+    s = s.replace(/^(flat|apartment|apt|unit|room|floor)\s+[\w-]+[,\s]+/i, '').trim();
+    var m = s.match(/^(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+
+  // Offset overlapping pins so they fan out and stay visible
+  // Called after all geocoding is done
+  function offsetOverlappingPins() {
+    var OFFSET = 0.00008; // degrees (~8m) per step
+    var placed = []; // {lat, lon, count}
+    pins.forEach(function (p) {
+      // Find if any already-placed pin is at same lat/lon (within rounding)
+      var match = null;
+      for (var i = 0; i < placed.length; i++) {
+        if (Math.abs(placed[i].lat - p.lat) < 0.0001 && Math.abs(placed[i].lon - p.lon) < 0.0001) {
+          match = placed[i];
+          break;
+        }
+      }
+      if (match) {
+        var n = match.count;
+        // Spread in a circle: angle based on count
+        var angle = (n * 137.5) * Math.PI / 180; // golden angle spread
+        var r = OFFSET * Math.ceil(n / 6 + 1);
+        var newLat = match.lat + r * Math.cos(angle);
+        var newLon = match.lon + r * Math.sin(angle) / Math.cos(match.lat * Math.PI / 180);
+        p.marker.setLatLng([newLat, newLon]);
+        match.count++;
+      } else {
+        placed.push({ lat: p.lat, lon: p.lon, count: 1 });
+      }
+    });
+  }
+
+  // ── Counter ───────────────────────────────────────────────────────────────
+  var textarea = document.getElementById('addrTextarea');
+  var counter  = document.getElementById('counter');
+
+  function getLines() {
+    return textarea.value.split('\n')
+      .map(function (l) { return l.trim(); })
+      .filter(function (l) { return l.length > 0; })
+      .slice(0, MAX);
+  }
+
+  textarea.addEventListener('input', function () {
+    var n = getLines().length;
+    counter.innerHTML = '<b>' + n + '</b> / 100 address' + (n !== 1 ? 'es' : '');
+  });
+
+  // ── Geocoding ─────────────────────────────────────────────────────────────
+  function delay(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function extractPostcode(s) {
+    var m = s.match(/[A-Z]{1,2}[0-9][0-9A-Z]?\s*[0-9][A-Z]{2}/i);
+    return m ? m[0].toUpperCase().replace(/\s+/, ' ') : null;
+  }
+
+  function fetchPostcodesIO(pc) {
+    return fetch('https://api.postcodes.io/postcodes/' + encodeURIComponent(pc.replace(/\s/g, '')))
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        return (j.status === 200 && j.result)
+          ? { lat: j.result.latitude, lon: j.result.longitude, display: pc } : null;
+      }).catch(function () { return null; });
+  }
+
+  function fetchNominatim(q, retries) {
+    retries = retries || 0;
+    var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=gb&q=' + encodeURIComponent(q);
+    return fetch(url, { headers: { 'Accept-Language': 'en-GB' } })
+      .then(function (r) {
+        if (r.status === 429 && retries < 2) {
+          return delay(2000 + retries * 1500).then(function () { return fetchNominatim(q, retries + 1); });
+        }
+        return r.json();
+      })
+      .then(function (d) {
+        if (!d || !d[0]) return null;
+        return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon), display: d[0].display_name };
+      }).catch(function () { return null; });
+  }
+
+  function geocode(q) {
+    // Sanity check — UK house numbers don't exceed ~999
+    var hn = houseNumber(q);
+    if (hn > 999) return Promise.resolve(null);
+
+    var pc = extractPostcode(q);
+    if (pc) {
+      return fetchPostcodesIO(pc).then(function (r) {
+        if (r) return r;
+        return delay(200).then(function () { return fetchNominatim(q); });
+      }).then(function (r) {
+        if (r) return r;
+        return delay(200).then(function () { return fetchNominatim(pc); });
+      });
+    }
+    return fetchNominatim(q);
+  }
+
+  // ── Pin All ───────────────────────────────────────────────────────────────
+  document.getElementById('pinBtn').addEventListener('click', function () {
+    var lines = getLines();
+    if (!lines.length) return;
+
+    // Clear existing
+    pins.forEach(function (p) { if (p.marker) p.marker.remove(); });
+    pins = [];
+
+    var pinBtn = document.getElementById('pinBtn');
+    var pw = document.getElementById('progressWrap');
+    var pf = document.getElementById('progressFill');
+    var pl = document.getElementById('progressLabel');
+    var rc = document.getElementById('resultsCard');
+    var rw = document.getElementById('resultsWrap');
+
+    pinBtn.disabled = true;
+    pinBtn.textContent = 'Pinning...';
+    pw.className = 'on';
+    pf.style.width = '0%';
+    rc.className = '';
+    rw.innerHTML = '';
+
+    // ── Deduplicate ────────────────────────────────────────────────────────
+    function normalise(s) { return s.toLowerCase().replace(/\s+/g, ' ').trim(); }
+    var seen = {};
+    var uniqueLines = [];
+    lines.forEach(function (addr) {
+      var key = normalise(addr);
+      if (seen[key]) { return; }
+      seen[key] = true;
+      uniqueLines.push(addr);
+    });
+
+    // ── Sort by street name, then house number ─────────────────────────────
+    uniqueLines.sort(function (a, b) {
+      var sc = streetKey(a).localeCompare(streetKey(b));
+      if (sc !== 0) return sc;
+      return houseNumber(a) - houseNumber(b);
+    });
+
+    sortedUnique = uniqueLines.slice();
+    var idx = 0;
+
+    function next() {
+      if (idx >= uniqueLines.length) {
+        // Done geocoding — now apply address-based grouping
+        pf.style.width = '100%';
+        pl.textContent = pins.length + ' of ' + uniqueLines.length + ' pinned';
+        pinBtn.disabled = false;
+        pinBtn.textContent = '📍 Pin All';
+
+        if (pins.length) {
+          var lls = pins.map(function (p) { return [p.lat, p.lon]; });
+          if (lls.length === 1) { map.setView(lls[0], 15); }
+          else { map.fitBounds(L.latLngBounds(lls), { padding: [50, 50] }); }
+          offsetOverlappingPins();
+        }
+        rc.className = 'card on';
+        document.getElementById('copyBtn').style.display = 'inline-block';
+        document.getElementById('selAllBtn').style.display = 'inline-block';
+        return;
+      }
+
+      var i     = idx++;
+      var addr  = uniqueLines[i];
+      var color = COLORS[i % COLORS.length];
+      var num   = i + 1;
+
+      pl.textContent = 'Locating ' + num + ' of ' + uniqueLines.length + ': ' + addr;
+      pf.style.width = Math.round((i / uniqueLines.length) * 100) + '%';
+
+      geocode(addr).then(function (geo) {
+        if (geo) {
+          var marker = L.marker([geo.lat, geo.lon], { icon: makeIcon(color, num) })
+            .addTo(map)
+            .bindPopup(
+              '<div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;margin-bottom:3px">' + num + '. ' + addr + '</div>'
+              + '<div style="font-size:10px;color:#888">' + geo.display.split(',').slice(0, 3).join(', ') + '</div>'
+            );
+          pins.push({
+            addr: addr,
+            lat: geo.lat, lon: geo.lon,
+            houseNum: houseNumber(addr),
+            streetKey: streetKey(addr),
+            color: color, num: num,
+            marker: marker
+          });
+          var lls = pins.map(function (p) { return [p.lat, p.lon]; });
+          if (lls.length === 1) { map.setView(lls[0], 14); }
+          else { map.fitBounds(L.latLngBounds(lls), { padding: [50, 50], animate: false }); }
+
+          var state = (houseNumber(addr) > 999) ? 'warn' : 'ok';
+          rw.appendChild(makeResultItem(addr, color, num, state));
+        } else {
+          rw.appendChild(makeResultItem(addr, color, num, 'fail'));
+        }
+        rc.className = 'card on';
+      }).catch(function () {
+        rw.appendChild(makeResultItem(addr, null, num, 'fail'));
+        rc.className = 'card on';
+      }).then(function () {
+        setTimeout(next, i < uniqueLines.length - 1 ? 300 : 0);
+      });
+    }
+
+    next();
+  });
+
+  // ── Selection ─────────────────────────────────────────────────────────────
+  var selectedAddrs = {};
+
+  function updateSelectionUI() {
+    var count = Object.keys(selectedAddrs).length;
+    var selCount = document.getElementById('selCount');
+    var copySelBtn = document.getElementById('copySelBtn');
+    var selAllBtn = document.getElementById('selAllBtn');
+    if (count > 0) {
+      selCount.textContent = count + ' selected';
+      selCount.style.display = 'inline';
+      copySelBtn.style.display = 'inline-block';
+      selAllBtn.textContent = 'Deselect all';
+    } else {
+      selCount.style.display = 'none';
+      copySelBtn.style.display = 'none';
+      selAllBtn.textContent = 'Select all';
+    }
+    refreshMapHighlights();
+  }
+
+  function makeResultItem(addr, color, num, state) {
+    // state: 'ok' | 'warn' | 'fail'
+    var div = document.createElement('div');
+    div.className = 'r-item';
+    div.dataset.addr = addr;
+    if (state === 'ok' || state === 'warn') {
+      var tag = state === 'warn'
+        ? '<span class="r-tag warn">⚠ unverified</span>'
+        : '<span class="r-tag ok">&#10003; found</span>';
+      div.innerHTML = '<div class="r-check"></div>'
+        + '<div class="r-dot" style="background:' + color + '"></div>'
+        + '<span class="r-name">' + num + '. ' + addr + '</span>'
+        + tag;
+      div.addEventListener('click', function () {
+        if (selectedAddrs[addr]) {
+          delete selectedAddrs[addr];
+          div.classList.remove('selected');
+        } else {
+          selectedAddrs[addr] = { addr: addr, num: num };
+          div.classList.add('selected');
+        }
+        updateSelectionUI();
+      });
+    } else {
+      div.innerHTML = '<div class="r-check" style="opacity:.3"></div>'
+        + '<div class="r-dot" style="background:#ccc"></div>'
+        + '<span class="r-name" style="opacity:.5">' + addr + '</span>'
+        + '<span class="r-tag fail">&#10007; not found</span>';
+    }
+    return div;
+  }
+
+  // ── Copy helper (works on mobile/HTTP) ───────────────────────────────────
+  function copyText(text, btn, label) {
+    function done() {
+      btn.textContent = '✓ Copied!';
+      setTimeout(function () { btn.innerHTML = label; }, 2000);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    } else {
+      fallback();
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { btn.textContent = 'Failed'; }
+      document.body.removeChild(ta);
+    }
+  }
+  var COPY_FOOTER = '\n\nPlease delete this information after usage and confirm that it has been completed.';
+
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    copyText(sortedUnique.join('\n') + COPY_FOOTER, this, '&#128203; Copy all');
+  });
+
+  // ── Copy selected ─────────────────────────────────────────────────────────
+  document.getElementById('copySelBtn').addEventListener('click', function () {
+    var sel = sortedUnique.filter(function (a) { return selectedAddrs[a]; });
+    copyText(sel.join('\n') + COPY_FOOTER, this, '&#128203; Copy selected');
+  });
+
+  // ── Select all / deselect all ─────────────────────────────────────────────
+  document.getElementById('selAllBtn').addEventListener('click', function () {
+    var hasAny = Object.keys(selectedAddrs).length > 0;
+    var items = document.querySelectorAll('#resultsWrap .r-item');
+    if (hasAny) {
+      selectedAddrs = {};
+      items.forEach(function (el) { el.classList.remove('selected'); });
+    } else {
+      items.forEach(function (el) {
+        if (el.dataset.addr && (el.querySelector('.r-tag.ok') || el.querySelector('.r-tag.warn'))) {
+          el.classList.add('selected');
+          selectedAddrs[el.dataset.addr] = true;
+        }
+      });
+    }
+    updateSelectionUI();
+  });
+
+  // ── Clear ─────────────────────────────────────────────────────────────────
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    pins.forEach(function (p) { if (p.marker) p.marker.remove(); });
+    pins = [];
+    textarea.value = '';
+    counter.innerHTML = '<b>0</b> / 100 addresses';
+    document.getElementById('progressWrap').className = '';
+    selectedAddrs = {};
+    document.getElementById('copyBtn').style.display = 'none';
+    document.getElementById('copySelBtn').style.display = 'none';
+    document.getElementById('selAllBtn').style.display = 'none';
+    document.getElementById('selCount').style.display = 'none';
+    sortedUnique = [];
+    document.getElementById('resultsWrap').innerHTML = '';
+    map.setView([54.5, -3], 5);
+  });
+
+})();
+</script>
+</body>
+</html>
