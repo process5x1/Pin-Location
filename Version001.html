@@ -16,22 +16,39 @@
 }
 body {
   font-family: 'IBM Plex Mono', monospace;
-  background: var(--bg); min-height: 100vh;
+  background: var(--bg); height: 100vh; overflow: hidden;
   display: flex; flex-direction: column; align-items: center;
-  padding: 24px 16px 60px;
+  padding: 0;
 }
-.wrapper { width: 100%; max-width: 1100px; }
+.wrapper {
+  width: 100%; max-width: 1100px; height: 100vh;
+  display: flex; flex-direction: column;
+  padding: 20px 16px 0;
+}
+.header { flex-shrink: 0; margin-bottom: 14px; }
 h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--ink); letter-spacing: -1px; margin-bottom: 4px; }
-.subtitle { font-size: 10px; color: var(--muted); margin-bottom: 20px; letter-spacing: 0.5px; }
-.top-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
-.left { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
+.subtitle { font-size: 10px; color: var(--muted); letter-spacing: 0.5px; }
+
+/* Top row: input left, map right — fixed height */
+.top-row {
+  flex-shrink: 0; display: flex; gap: 16px; align-items: stretch;
+  margin-bottom: 16px;
+}
+.left { width: 340px; flex-shrink: 0; }
 .right { flex: 1; min-width: 0; }
-.bottom-row { display: flex; flex-direction: column; gap: 12px; }
+
+/* Bottom row: results scroll */
+.bottom-row {
+  flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 20px;
+}
+
 @media (max-width: 680px) {
-  body { padding: 16px 12px 40px; }
+  body { overflow: auto; height: auto; }
+  .wrapper { height: auto; padding: 16px 12px 40px; }
   .top-row { flex-direction: column; }
   .left { width: 100%; }
   .right { width: 100%; }
+  .bottom-row { overflow: visible; flex: none; }
   #addrTextarea { height: 130px; }
 }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
@@ -70,14 +87,17 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #progressFill { height: 100%; background: var(--accent); border-radius: 99px; width: 0%; transition: width .3s; }
 #progressLabel { font-size: 10px; color: var(--muted); margin-top: 6px; }
 #mapEl {
-  width: 100%; height: 480px;
+  width: 100%; height: 100%; min-height: 340px;
   border-radius: 14px; border: 1px solid var(--border);
   box-shadow: 0 2px 12px rgba(0,0,0,.05); display: block;
 }
-@media (max-width: 680px) { #mapEl { height: 300px; border-radius: 10px; } }
+@media (max-width: 680px) { #mapEl { height: 300px; min-height: 300px; border-radius: 10px; } }
 #resultsCard { display: none; }
 #resultsCard.on { display: block; }
 .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+@media (max-width: 680px) {
+  .results-grid { max-height: calc(8 * 44px); overflow-y: auto; }
+}
 .r-item {
   display: flex; align-items: center; gap: 8px; padding: 8px 10px;
   background: var(--bg); border: 1px solid var(--border); border-radius: 9px; font-size: 11px;
@@ -103,8 +123,10 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 </head>
 <body>
 <div class="wrapper">
-  <h1>Address Pinner</h1>
-  <p class="subtitle">PASTE UP TO 100 ADDRESSES — ONE PER LINE — PIN THEM ALL ON THE MAP</p>
+  <div class="header">
+    <h1>Address Pinner</h1>
+    <p class="subtitle">PASTE UP TO 100 ADDRESSES — ONE PER LINE — PIN THEM ALL ON THE MAP</p>
+  </div>
   <div class="top-row">
     <div class="left">
       <div class="card">
@@ -123,8 +145,8 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       </div>
     </div>
     <div class="right">
-      <div class="map-wrap">
-        <div id="mapEl"></div>
+      <div class="map-wrap" style="height:100%;display:flex;flex-direction:column;">
+        <div id="mapEl" style="flex:1;min-height:300px;"></div>
         <div class="map-controls">
           <button class="map-btn" id="locateBtn" title="My location">📍</button>
           <button class="map-btn" id="rotateBtn" title="Rotate map">🧭</button>
@@ -457,6 +479,24 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
               '<div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700;margin-bottom:3px">' + num + '. ' + addr + '</div>'
               + '<div style="font-size:10px;color:#888">' + geo.display.split(',').slice(0, 3).join(', ') + '</div>'
             );
+
+          // Click pin → select/highlight matching result item
+          marker.on('click', function () {
+            var el = document.querySelector('#resultsWrap .r-item[data-addr="' + addr.replace(/"/g, '&quot;') + '"]');
+            if (!el) return;
+            // Toggle selection
+            if (selectedAddrs[addr]) {
+              delete selectedAddrs[addr];
+              el.classList.remove('selected');
+            } else {
+              selectedAddrs[addr] = { addr: addr, num: num };
+              el.classList.add('selected');
+            }
+            updateSelectionUI();
+            // Scroll result into view
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          });
+
           pins.push({
             addr: addr,
             lat: geo.lat, lon: geo.lon,
