@@ -44,20 +44,22 @@ h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: 
 
 @media (max-width: 680px) {
   body { overflow: auto; height: auto; }
-  .wrapper { height: auto; padding: 16px 12px 40px; }
-  .top-row { flex-direction: column; gap: 0; }
-  .left { width: 100%; }
+  .wrapper { height: auto; padding: 0 0 40px; display: flex; flex-direction: column; }
+  .top-row { flex-direction: column; gap: 0; display: contents; }
   .right {
-    width: 100%;
-    position: sticky;
-    top: 0;
+    order: 1;
+    position: fixed;
+    top: 0; left: 0; right: 0;
     z-index: 500;
-    padding: 8px 0;
+    height: 240px;
     background: var(--bg);
+    width: 100%;
   }
-  .bottom-row { overflow: visible; flex: none; }
+  .header { order: 2; margin-top: 240px; padding: 16px 12px 0; }
+  .left { order: 3; width: 100%; padding: 12px; }
+  .bottom-row { order: 4; overflow: visible; flex: none; padding: 0 12px; }
   #addrTextarea { height: 130px; }
-  #mapEl { height: 260px; min-height: 260px; border-radius: 10px; }
+  #mapEl { height: 240px; min-height: 240px; border-radius: 0; }
 }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
 .card-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
@@ -102,7 +104,19 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 @media (max-width: 680px) { #mapEl { height: 300px; min-height: 300px; border-radius: 10px; } }
 #resultsCard { display: none; }
 #resultsCard.on { display: block; }
-.results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.results-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.toolbar-btns { display: flex; gap: 6px; overflow-x: auto; flex-shrink: 1; padding-bottom: 2px; scrollbar-width: none; }
+.toolbar-btns::-webkit-scrollbar { display: none; }
+.tb-btn {
+  background: var(--bg); color: var(--muted); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 6px 11px; font-size: 10px; font-weight: 700;
+  font-family: 'Syne', sans-serif; cursor: pointer; transition: all .15s;
+  -webkit-appearance: none; white-space: nowrap; flex-shrink: 0;
+}
+.tb-btn:hover { border-color: var(--ink); color: var(--ink); }
+.tb-btn:disabled { opacity: .35; cursor: not-allowed; }
+.tb-btn.tb-accent { background: var(--ink); color: #fff; border-color: var(--ink); }
+.tb-btn.tb-accent:hover { background: var(--accent); border-color: var(--accent); }
 @media (max-width: 680px) {
   .results-grid { max-height: calc(8 * 44px); overflow-y: auto; }
 }
@@ -168,15 +182,16 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   </div>
   <div class="bottom-row">
     <div class="card" id="resultsCard">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;">
-        <div class="card-title">Results</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span id="selCount" style="font-size:10px;color:var(--muted);display:none;"></span>
-          <button class="secondary" id="selAllBtn" style="display:none;padding:7px 12px;font-size:11px;">Select all</button>
-          <button class="secondary" id="copyBtn" style="display:none;padding:7px 14px;font-size:11px;">&#128203; Copy all</button>
-          <button class="primary" id="copySelBtn" style="display:none;padding:7px 14px;font-size:11px;">&#128203; Copy selected</button>
-          <button class="secondary" id="copyAssignBtn" style="display:none;padding:7px 14px;font-size:11px;">&#10003; Copy &amp; Assigned</button>
-        </div>
+      <div class="results-toolbar">
+        <div class="card-title" style="margin-bottom:0;flex-shrink:0;">Results</div>
+        <span id="selCount" style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;"></span>
+      </div>
+      <div class="toolbar-btns" style="margin-bottom:12px;">
+        <button class="tb-btn" id="selAllBtn">Select all</button>
+        <button class="tb-btn" id="unassignBtn">↩ Unassign</button>
+        <button class="tb-btn" id="copyBtn">Copy all</button>
+        <button class="tb-btn" id="copySelBtn">Copy selected</button>
+        <button class="tb-btn tb-accent" id="copyAssignBtn">✓ Assign</button>
       </div>
       <div class="results-grid" id="resultsWrap"></div>
     </div>
@@ -489,8 +504,6 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           offsetOverlappingPins();
         }
         rc.className = 'card on';
-        document.getElementById('copyBtn').style.display = 'inline-block';
-        document.getElementById('selAllBtn').style.display = 'inline-block';
         return;
       }
 
@@ -563,20 +576,9 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   function updateSelectionUI() {
     var count = Object.keys(selectedAddrs).length;
     var selCount = document.getElementById('selCount');
-    var copySelBtn = document.getElementById('copySelBtn');
     var selAllBtn = document.getElementById('selAllBtn');
-    if (count > 0) {
-      selCount.textContent = count + ' selected';
-      selCount.style.display = 'inline';
-      copySelBtn.style.display = 'inline-block';
-      document.getElementById('copyAssignBtn').style.display = 'inline-block';
-      selAllBtn.textContent = 'Deselect all';
-    } else {
-      selCount.style.display = 'none';
-      copySelBtn.style.display = 'none';
-      document.getElementById('copyAssignBtn').style.display = 'none';
-      selAllBtn.textContent = 'Select all';
-    }
+    selCount.textContent = count > 0 ? count + ' selected' : '';
+    selAllBtn.textContent = count > 0 ? 'Deselect all' : 'Select all';
     refreshMapHighlights();
   }
 
@@ -640,7 +642,18 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     copyText(sortedUnique.join('\n') + COPY_FOOTER, this, '&#128203; Copy all');
   });
 
-  // ── Copy & Assigned ───────────────────────────────────────────────────────
+  // ── Unassign selected ────────────────────────────────────────────────────
+  document.getElementById('unassignBtn').addEventListener('click', function () {
+    Object.keys(selectedAddrs).forEach(function (addr) {
+      var el = document.querySelector('#resultsWrap .r-item[data-addr="' + addr.replace(/"/g, '&quot;') + '"]');
+      if (el) {
+        el.classList.remove('assigned');
+        el.classList.remove('selected');
+      }
+      delete selectedAddrs[addr];
+    });
+    updateSelectionUI();
+  });
   document.getElementById('copyAssignBtn').addEventListener('click', function () {
     var sel = sortedUnique.filter(function (a) { return selectedAddrs[a]; });
     if (!sel.length) return;
@@ -687,11 +700,6 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     counter.innerHTML = '<b>0</b> / 100 addresses';
     document.getElementById('progressWrap').className = '';
     selectedAddrs = {};
-    document.getElementById('copyBtn').style.display = 'none';
-    document.getElementById('copySelBtn').style.display = 'none';
-    document.getElementById('copyAssignBtn').style.display = 'none';
-    document.getElementById('selAllBtn').style.display = 'none';
-    document.getElementById('selCount').style.display = 'none';
     sortedUnique = [];
     document.getElementById('resultsWrap').innerHTML = '';
     map.setView([54.5, -3], 5);
