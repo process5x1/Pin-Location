@@ -136,6 +136,11 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 .r-tag.warn { background: rgba(230,126,34,.12); color: #e67e22; }
 .r-item.assigned { opacity: 0.45; }
 .r-item.assigned .r-name { text-decoration: line-through; }
+.h-item { padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; margin-bottom: 8px; }
+.h-item:last-child { margin-bottom: 0; }
+.h-meta { font-size: 10px; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.h-addrs { font-size: 11px; color: var(--ink); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.h-actions { display: flex; gap: 6px; margin-top: 8px; }
 /* Map wrap & controls */
 .map-wrap { position: relative; }
 .map-controls { position: absolute; top: 10px; right: 10px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; }
@@ -194,6 +199,13 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <button class="tb-btn tb-accent" id="copyAssignBtn">✓ Assign</button>
       </div>
       <div class="results-grid" id="resultsWrap"></div>
+    </div>
+    <div class="card" id="organisationCard" style="margin-top:12px;">
+      <div class="results-toolbar" style="margin-bottom:10px;">
+        <div class="card-title" style="margin-bottom:0;">Organisation <span style="font-size:10px;color:var(--muted);font-weight:400;font-family:'IBM Plex Mono',monospace;"> · auto-deletes after 24h</span></div>
+        <button class="tb-btn" id="clearOrganisationBtn">Clear all</button>
+      </div>
+      <div id="organisationWrap"><span style="font-size:11px;color:var(--muted);">No organisation yet.</span></div>
     </div>
   </div>
 </div>
@@ -704,6 +716,96 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     document.getElementById('resultsWrap').innerHTML = '';
     map.setView([54.5, -3], 5);
   });
+
+  // ── Organisation ───────────────────────────────────────────────────────────────
+  var HISTORY_KEY = 'addrPinnerOrganisation';
+  var HISTORY_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+
+  function loadOrganisation() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; }
+  }
+
+  function saveOrganisation(entries) {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(entries)); } catch(e) {}
+  }
+
+  function purgeOldOrganisation() {
+    var now = Date.now();
+    var entries = loadOrganisation().filter(function(e) { return now - e.ts < HISTORY_TTL; });
+    saveOrganisation(entries);
+    return entries;
+  }
+
+  function addOrganisationEntry(addrs, label) {
+    var entries = purgeOldOrganisation();
+    entries.unshift({ ts: Date.now(), label: label, addrs: addrs });
+    entries = entries.slice(0, 50); // max 50 entries
+    saveOrganisation(entries);
+    renderOrganisation();
+  }
+
+  function renderOrganisation() {
+    var entries = purgeOldOrganisation();
+    var wrap = document.getElementById('organisationWrap');
+    if (!entries.length) {
+      wrap.innerHTML = '<span style="font-size:11px;color:var(--muted);">No organisation yet.</span>';
+      return;
+    }
+    wrap.innerHTML = '';
+    entries.forEach(function(e, idx) {
+      var age = Date.now() - e.ts;
+      var hrsLeft = Math.ceil((HISTORY_TTL - age) / 3600000);
+      var timeStr = new Date(e.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      var dateStr = new Date(e.ts).toLocaleDateString([], { day: 'numeric', month: 'short' });
+
+      var div = document.createElement('div');
+      div.className = 'h-item';
+      div.innerHTML = '<div class="h-meta">'
+        + '<span>' + e.label + ' · ' + dateStr + ' ' + timeStr + '</span>'
+        + '<span>expires in ' + hrsLeft + 'h</span>'
+        + '</div>'
+        + '<div class="h-addrs">' + e.addrs.join('\n') + '</div>'
+        + '<div class="h-actions">'
+        + '<button class="tb-btn" data-idx="' + idx + '" data-action="copy">Copy</button>'
+        + '<button class="tb-btn" data-idx="' + idx + '" data-action="delete" style="color:#e74c3c;border-color:#e74c3c;">Delete</button>'
+        + '</div>';
+      wrap.appendChild(div);
+    });
+
+    // Wire up copy/delete buttons
+    wrap.querySelectorAll('.tb-btn[data-action]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.idx);
+        var entries = purgeOldOrganisation();
+        if (this.dataset.action === 'copy') {
+          copyText(entries[idx].addrs.join('\n') + COPY_FOOTER, this, 'Copy');
+        } else {
+          entries.splice(idx, 1);
+          saveOrganisation(entries);
+          renderOrganisation();
+        }
+      });
+    });
+  }
+
+  // Save to organisation whenever anything is copied
+  var _origCopyText = copyText;
+  function copyTextWithOrganisation(text, btn, label) {
+    _origCopyText(text, btn, label);
+    // Extract just addresses (strip footer)
+    var addrs = text.replace(COPY_FOOTER, '').trim().split('\n').filter(Boolean);
+    if (addrs.length) addOrganisationEntry(addrs, addrs.length + ' address' + (addrs.length !== 1 ? 'es' : ''));
+  }
+  copyText = copyTextWithOrganisation;
+
+  // Clear all organisation
+  document.getElementById('clearOrganisationBtn').addEventListener('click', function() {
+    saveOrganisation([]);
+    renderOrganisation();
+  });
+
+  // Init
+  renderOrganisation();
 
 })();
 </script>
