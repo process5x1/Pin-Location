@@ -91,11 +91,8 @@ body {
 }
 .home-cards {
   width: 100%; max-width: 820px;
-  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  display: grid; grid-template-columns: 1fr 1fr;
   gap: 16px; padding: 0 24px 60px;
-}
-@media (max-width: 760px) {
-  .home-cards { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 560px) {
   .home-cards { grid-template-columns: 1fr; }
@@ -156,33 +153,16 @@ h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: 
 }
 
 @media (max-width: 680px) {
-  /* The .page is already position:fixed + overflow-y:auto — it's the scroll container */
-  .inner-page { height: auto; }
+  .inner-page { height: auto; overflow: auto; }
   .wrapper { height: auto; padding: 0 0 40px; }
   .top-row { flex-direction: column; gap: 0; display: contents; }
-
-  /* Map: truly fixed so it never moves */
   .right {
-    order: 1;
-    position: fixed;
-    top: 52px; left: 0; right: 0;
-    z-index: 500;
-    height: 260px;
-    width: 100%;
-    background: var(--bg);
+    order: 1; position: sticky; top: 52px; left: 0; right: 0;
+    z-index: 500; height: 260px; background: var(--bg); width: 100%;
   }
-
-  /* Spacer pushes all scrollable content below the fixed map */
-  .mobile-map-spacer {
-    display: block;
-    height: 260px;
-    flex-shrink: 0;
-    order: 1;
-  }
-
   .header { order: 2; padding: 16px 12px 0; }
   .left { order: 3; width: 100%; padding: 12px; }
-  .bottom-row { order: 4; overflow: visible; flex: none; padding: 0 12px 60px; }
+  .bottom-row { order: 4; overflow: visible; flex: none; padding: 0 12px; }
   #addrTextarea, #sfTextarea { height: 130px; }
   #mapEl, #sfMapEl { height: 260px; min-height: 260px; border-radius: 0; }
 
@@ -192,7 +172,10 @@ h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: 
   }
 }
 
-.mobile-map-spacer { display: none; }
+/* Lasso toggle button — visible only on touch/mobile */
+.lasso-btn {
+  display: none;
+}
 @media (max-width: 680px) {
   .lasso-btn {
     display: flex;
@@ -474,7 +457,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   <div class="home-hero">
     <div class="home-tagline">UK Address Tools</div>
     <h2 class="home-h1">Address Pinner<br>&amp; <span>Street Finder</span></h2>
-    <p class="home-sub">Three tools to help you work with UK addresses. Pin addresses on a map, sort resident lists, or find every property on a street.</p>
+    <p class="home-sub">Two tools to help you work with UK addresses. Pin multiple addresses on a map, or search for every property on a street.</p>
   </div>
   <div class="home-cards">
     <button class="tool-card" onclick="showPage('pinner')">
@@ -488,12 +471,6 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <div class="tool-card-title">Street Finder</div>
       <div class="tool-card-desc">Search for a street name and find all matching roads across the UK. Click any result to see it on the map and explore the area.</div>
       <div class="tool-card-cta">Open Street Finder</div>
-    </button>
-    <button class="tool-card" onclick="showPage('pinner'); setTimeout(function(){ document.getElementById('sorterSection').scrollIntoView({behavior:'smooth'}); }, 400);">
-      <div class="tool-card-icon">🗂️</div>
-      <div class="tool-card-title">Address Sorter</div>
-      <div class="tool-card-desc">Paste a resident list and sort it by street and house number. Pick the addresses you need and export them with or without names.</div>
-      <div class="tool-card-cta">Open Address Sorter</div>
     </button>
   </div>
 </div>
@@ -515,10 +492,10 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <p class="subtitle">PASTE UP TO 100 ADDRESSES — ONE PER LINE — PIN THEM ALL ON THE MAP</p>
       </div>
       <div class="top-row">
-        <div class="mobile-map-spacer"></div>
         <div class="left">
           <div class="card">
             <div class="card-title">Your addresses</div>
+            <div class="card-hint">One address per line. Include postcode for best accuracy.</div>
             <textarea class="addr-textarea" id="addrTextarea" placeholder="10 Downing Street, SW1A 2AA&#10;221B Baker Street, NW1 6XE&#10;1 Princes St, Edinburgh EH2 2ER"></textarea>
             <div class="counter" id="counter"><b>0</b> / 100 addresses</div>
             <div class="btn-row">
@@ -632,7 +609,6 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <p class="subtitle">PASTE ADDRESSES — ADD A CITY — SEE ALL STREETS PINNED ON THE MAP</p>
       </div>
       <div class="top-row">
-        <div class="mobile-map-spacer"></div>
         <div class="left">
           <div class="card">
             <div class="card-title">Your addresses</div>
