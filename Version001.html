@@ -91,8 +91,11 @@ body {
 }
 .home-cards {
   width: 100%; max-width: 820px;
-  display: grid; grid-template-columns: 1fr 1fr;
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
   gap: 16px; padding: 0 24px 60px;
+}
+@media (max-width: 760px) {
+  .home-cards { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 560px) {
   .home-cards { grid-template-columns: 1fr; }
@@ -133,7 +136,7 @@ body {
 /* ══════════════════════════════════════════════
    SHARED INNER LAYOUT
 ══════════════════════════════════════════════ */
-.inner-page { display: flex; flex-direction: column; height: calc(100vh - 52px); }
+.inner-page { display: flex; flex-direction: column; min-height: calc(100vh - 52px); }
 .wrapper {
   width: 100%; max-width: 1100px; margin: 0 auto;
   flex: 1; display: flex; flex-direction: column;
@@ -149,20 +152,37 @@ h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: 
 .left { width: 340px; flex-shrink: 0; }
 .right { flex: 1; min-width: 0; }
 .bottom-row {
-  flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 20px;
+  flex: 1; min-height: 0; padding-bottom: 40px;
 }
 
 @media (max-width: 680px) {
-  .inner-page { height: auto; overflow: auto; }
+  /* The .page is already position:fixed + overflow-y:auto — it's the scroll container */
+  .inner-page { height: auto; }
   .wrapper { height: auto; padding: 0 0 40px; }
   .top-row { flex-direction: column; gap: 0; display: contents; }
+
+  /* Map: truly fixed so it never moves */
   .right {
-    order: 1; position: sticky; top: 52px; left: 0; right: 0;
-    z-index: 500; height: 260px; background: var(--bg); width: 100%;
+    order: 1;
+    position: fixed;
+    top: 52px; left: 0; right: 0;
+    z-index: 500;
+    height: 260px;
+    width: 100%;
+    background: var(--bg);
   }
+
+  /* Spacer pushes all scrollable content below the fixed map */
+  .mobile-map-spacer {
+    display: block;
+    height: 260px;
+    flex-shrink: 0;
+    order: 1;
+  }
+
   .header { order: 2; padding: 16px 12px 0; }
   .left { order: 3; width: 100%; padding: 12px; }
-  .bottom-row { order: 4; overflow: visible; flex: none; padding: 0 12px; }
+  .bottom-row { order: 4; overflow: visible; flex: none; padding: 0 12px 60px; }
   #addrTextarea, #sfTextarea { height: 130px; }
   #mapEl, #sfMapEl { height: 260px; min-height: 260px; border-radius: 0; }
 
@@ -172,10 +192,7 @@ h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: 
   }
 }
 
-/* Lasso toggle button — visible only on touch/mobile */
-.lasso-btn {
-  display: none;
-}
+.mobile-map-spacer { display: none; }
 @media (max-width: 680px) {
   .lasso-btn {
     display: flex;
@@ -357,6 +374,89 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 .sf-item-tag.pending { background: rgba(140,136,128,.1); color: var(--muted); }
 .sf-empty { font-size: 11px; color: var(--muted); padding: 16px 0; text-align: center; }
 .sf-status { font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+
+/* ══════════════════════════════════════════════
+   ADDRESS SORTER SECTION
+══════════════════════════════════════════════ */
+#sorterSection { margin-top: 12px; }
+.sorter-panels {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-top: 12px;
+}
+@media (max-width: 680px) { .sorter-panels { grid-template-columns: 1fr; } }
+.sorter-panel {
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card); display: flex; flex-direction: column;
+  height: 420px; overflow: hidden;
+}
+.sorter-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px 9px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.sorter-panel-title {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em;
+}
+.sorter-panel-count { font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+.sorter-scroll { flex: 1; overflow-y: auto; padding: 10px 12px; }
+.sorter-road-section { margin-bottom: 14px; }
+.sorter-road-header {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding-bottom: 4px; border-bottom: 1px solid var(--border); margin-bottom: 6px;
+  font-family: 'Syne', sans-serif;
+}
+.sorter-addr-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 9px;
+  padding: 7px 10px; margin-bottom: 5px;
+  display: flex; align-items: flex-start; gap: 8px;
+  transition: border-color .15s, opacity .2s;
+}
+.sorter-addr-card:hover { border-color: var(--ink); }
+.sorter-addr-card.is-added { opacity: 0.35; }
+.sorter-addr-card.in-selection { border-color: var(--green); background: rgba(39,174,96,.06); }
+.sorter-addr-info { flex: 1; min-width: 0; }
+.sorter-addr-number { font-size: 10px; font-weight: 600; color: var(--muted); margin-bottom: 1px; font-family: 'IBM Plex Mono', monospace; }
+.sorter-addr-names { font-size: 12px; color: var(--ink); line-height: 1.4; margin-bottom: 1px; font-weight: 600; }
+.sorter-addr-full { font-size: 11px; color: var(--muted); }
+.sorter-card-btns { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+.sorter-btn-add {
+  font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+  color: var(--green); border: 1.5px solid rgba(39,174,96,.4);
+  background: transparent; border-radius: 6px; padding: 4px 9px; cursor: pointer;
+  transition: all .15s; -webkit-appearance: none; white-space: nowrap;
+}
+.sorter-btn-add:hover { background: rgba(39,174,96,.1); }
+.sorter-btn-add:disabled { opacity: .3; cursor: default; pointer-events: none; }
+.sorter-btn-remove {
+  font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+  color: #e74c3c; border: 1.5px solid rgba(231,76,60,.3);
+  background: transparent; border-radius: 6px; padding: 4px 9px; cursor: pointer;
+  transition: all .15s; -webkit-appearance: none; white-space: nowrap;
+}
+.sorter-btn-remove:hover { background: rgba(231,76,60,.08); }
+.sorter-export {
+  border-top: 1px solid var(--border); padding: 10px 14px; flex-shrink: 0; display: none;
+}
+.sorter-export-label {
+  font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+}
+.sorter-export-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.sorter-export-row:last-child { margin-bottom: 0; }
+.sorter-empty {
+  text-align: center; color: var(--muted); font-size: 11px;
+  padding: 2rem 1rem; line-height: 1.7;
+}
+.sorter-stats { font-size: 10px; color: var(--muted); margin-left: auto; font-family: 'IBM Plex Mono', monospace; }
+#sorterInput {
+  width: 100%; height: 130px; background: var(--bg); border: 2px solid var(--border);
+  border-radius: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  color: var(--ink); padding: 12px 14px; outline: none; resize: vertical; line-height: 1.7;
+  transition: border-color .2s; margin-bottom: 10px;
+}
+#sorterInput:focus { border-color: var(--accent); }
+#sorterInput::placeholder { color: #bbb; }
 </style>
 </head>
 <body>
@@ -374,7 +474,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   <div class="home-hero">
     <div class="home-tagline">UK Address Tools</div>
     <h2 class="home-h1">Address Pinner<br>&amp; <span>Street Finder</span></h2>
-    <p class="home-sub">Two tools to help you work with UK addresses. Pin multiple addresses on a map, or search for every property on a street.</p>
+    <p class="home-sub">Three tools to help you work with UK addresses. Pin addresses on a map, sort resident lists, or find every property on a street.</p>
   </div>
   <div class="home-cards">
     <button class="tool-card" onclick="showPage('pinner')">
@@ -388,6 +488,12 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <div class="tool-card-title">Street Finder</div>
       <div class="tool-card-desc">Search for a street name and find all matching roads across the UK. Click any result to see it on the map and explore the area.</div>
       <div class="tool-card-cta">Open Street Finder</div>
+    </button>
+    <button class="tool-card" onclick="showPage('pinner'); setTimeout(function(){ document.getElementById('sorterSection').scrollIntoView({behavior:'smooth'}); }, 400);">
+      <div class="tool-card-icon">🗂️</div>
+      <div class="tool-card-title">Address Sorter</div>
+      <div class="tool-card-desc">Paste a resident list and sort it by street and house number. Pick the addresses you need and export them with or without names.</div>
+      <div class="tool-card-cta">Open Address Sorter</div>
     </button>
   </div>
 </div>
@@ -409,10 +515,10 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <p class="subtitle">PASTE UP TO 100 ADDRESSES — ONE PER LINE — PIN THEM ALL ON THE MAP</p>
       </div>
       <div class="top-row">
+        <div class="mobile-map-spacer"></div>
         <div class="left">
           <div class="card">
             <div class="card-title">Your addresses</div>
-            <div class="card-hint">One address per line. Include postcode for best accuracy.</div>
             <textarea class="addr-textarea" id="addrTextarea" placeholder="10 Downing Street, SW1A 2AA&#10;221B Baker Street, NW1 6XE&#10;1 Princes St, Edinburgh EH2 2ER"></textarea>
             <div class="counter" id="counter"><b>0</b> / 100 addresses</div>
             <div class="btn-row">
@@ -461,6 +567,49 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           </div>
           <div id="organisationWrap"><span style="font-size:11px;color:var(--muted);">No organisation yet.</span></div>
         </div>
+
+        <!-- ══ ADDRESS SORTER ══ -->
+        <div class="card" id="sorterSection" style="margin-top:12px;">
+          <div class="results-toolbar" style="margin-bottom:4px;">
+            <div class="card-title" style="margin-bottom:0;">Address Sorter</div>
+            <span class="sorter-stats" id="sorterStats"></span>
+          </div>
+          <div class="card-hint" style="margin-bottom:10px;">Paste a resident list (Resident → Name → Address, blank line between). Sorts by street &amp; number — pick what you need.</div>
+          <textarea id="sorterInput" placeholder="Resident&#10;John Smith&#10;14 Oak Road, London, E1 2AB&#10;&#10;Resident&#10;Jane Doe&#10;7 Maple Street, London, N1 9XY"></textarea>
+          <div class="btn-row" style="margin-bottom:0;">
+            <button class="primary" style="font-size:12px;padding:10px;" onclick="sorterParseAndSort()">Sort addresses</button>
+            <button class="secondary" style="font-size:12px;" onclick="sorterClearAll()">Clear</button>
+          </div>
+          <div class="sorter-panels" id="sorterPanels" style="display:none;">
+            <div class="sorter-panel">
+              <div class="sorter-panel-head">
+                <span class="sorter-panel-title">All addresses</span>
+                <span class="sorter-panel-count" id="sorterLeftCount"></span>
+              </div>
+              <div class="sorter-scroll" id="sorterAllList"></div>
+            </div>
+            <div class="sorter-panel">
+              <div class="sorter-panel-head">
+                <span class="sorter-panel-title">Your selection</span>
+                <span class="sorter-panel-count" id="sorterRightCount">0 added</span>
+              </div>
+              <div class="sorter-scroll" id="sorterSelectedList" style="flex:1;">
+                <div class="sorter-empty">Click <strong>+ Add</strong> on any address<br>to build your selection.</div>
+              </div>
+              <div class="sorter-export" id="sorterExportPanel">
+                <div class="sorter-export-label">Export selection</div>
+                <div class="sorter-export-row">
+                  <button class="primary" style="font-size:11px;padding:6px 11px;" onclick="sorterExportAddresses()">Download addresses</button>
+                  <button class="secondary" style="font-size:11px;padding:6px 11px;" onclick="sorterCopyAddresses(this)">Copy addresses</button>
+                </div>
+                <div class="sorter-export-row">
+                  <button class="primary" style="font-size:11px;padding:6px 11px;" onclick="sorterExportWithNames()">Download with names</button>
+                  <button class="secondary" style="font-size:11px;padding:6px 11px;" onclick="sorterCopyWithNames(this)">Copy with names</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -483,6 +632,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <p class="subtitle">PASTE ADDRESSES — ADD A CITY — SEE ALL STREETS PINNED ON THE MAP</p>
       </div>
       <div class="top-row">
+        <div class="mobile-map-spacer"></div>
         <div class="left">
           <div class="card">
             <div class="card-title">Your addresses</div>
@@ -838,6 +988,231 @@ function initPinnerMap() {
     document.getElementById('clearOrganisationBtn').addEventListener('click',function(){saveOrganisation([]);renderOrganisation();});
     renderOrganisation();
   })();
+}
+
+// ══════════════════════════════════════════════
+//  ADDRESS SORTER
+// ══════════════════════════════════════════════
+var sorterAddressGroups = {};
+var sorterSelectedItems = [];
+var sorterAddrLookup = [];
+
+function sorterParseInput(raw) {
+  var lines = raw.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l; });
+  var entries = [];
+  var i = 0;
+  while (i < lines.length) {
+    if (lines[i].toLowerCase() === 'resident') {
+      var name = lines[i+1] || '';
+      var addr = lines[i+2] || '';
+      if (name && addr) entries.push({ name: name, addr: addr });
+      i += 3;
+    } else { i++; }
+  }
+  return entries;
+}
+
+function sorterGetHouseNumber(addr) {
+  var match = addr.match(/\b(\d+)[a-zA-Z]?\b/);
+  return match ? parseInt(match[1]) : Infinity;
+}
+
+function sorterGetRoadKey(addr) {
+  var s = addr.replace(/^\d+[a-zA-Z]?\s+/, '');
+  return s.split(',')[0].trim();
+}
+
+function sorterAddrIndex(addr) {
+  var i = sorterAddrLookup.indexOf(addr);
+  if (i === -1) { i = sorterAddrLookup.length; sorterAddrLookup.push(addr); }
+  return i;
+}
+
+function sorterIsSelected(addr) {
+  return sorterSelectedItems.some(function(s){ return s.addr === addr; });
+}
+
+function sorterEsc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function sorterParseAndSort() {
+  var raw = document.getElementById('sorterInput').value;
+  var entries = sorterParseInput(raw);
+  if (!entries.length) {
+    document.getElementById('sorterStats').textContent = 'No entries found.';
+    document.getElementById('sorterPanels').style.display = 'none';
+    return;
+  }
+  var grouped = {};
+  entries.forEach(function(e) {
+    var road = sorterGetRoadKey(e.addr);
+    if (!grouped[road]) grouped[road] = {};
+    if (!grouped[road][e.addr]) grouped[road][e.addr] = [];
+    grouped[road][e.addr].push(e.name);
+  });
+  sorterAddressGroups = grouped;
+  sorterSelectedItems = [];
+  sorterAddrLookup = [];
+  document.getElementById('sorterPanels').style.display = 'grid';
+  var total = 0;
+  Object.keys(grouped).forEach(function(r){ total += Object.keys(grouped[r]).length; });
+  var roads = Object.keys(grouped).length;
+  document.getElementById('sorterStats').textContent = total + ' addr · ' + roads + ' road' + (roads !== 1 ? 's' : '');
+  document.getElementById('sorterLeftCount').textContent = total + ' total';
+  sorterRenderLeft();
+  sorterRenderRight();
+}
+
+function sorterSortedAddrsForRoad(road) {
+  return Object.keys(sorterAddressGroups[road]).sort(function(a, b) {
+    var na = sorterGetHouseNumber(a), nb = sorterGetHouseNumber(b);
+    return na !== nb ? na - nb : a.localeCompare(b);
+  });
+}
+
+function sorterRenderLeft() {
+  var roads = Object.keys(sorterAddressGroups).sort(function(a,b){ return a.localeCompare(b); });
+  var html = '';
+  roads.forEach(function(road) {
+    html += '<div class="sorter-road-section"><div class="sorter-road-header">' + sorterEsc(road) + '</div>';
+    sorterSortedAddrsForRoad(road).forEach(function(addr) {
+      var names = sorterAddressGroups[road][addr];
+      var num = sorterGetHouseNumber(addr);
+      var added = sorterIsSelected(addr);
+      var idx = sorterAddrIndex(addr);
+      html += '<div class="sorter-addr-card' + (added ? ' is-added' : '') + '">'
+        + '<div class="sorter-addr-info">'
+        + (num !== Infinity ? '<div class="sorter-addr-number">No. ' + num + '</div>' : '')
+        + '<div class="sorter-addr-names">' + names.map(sorterEsc).join('<br>') + '</div>'
+        + '<div class="sorter-addr-full">' + sorterEsc(addr) + '</div>'
+        + '</div>'
+        + '<div class="sorter-card-btns">'
+        + '<button class="sorter-btn-add" data-sorter-action="add" data-sorter-idx="' + idx + '"' + (added ? ' disabled' : '') + '>+ Add</button>'
+        + (added ? '<button class="sorter-btn-remove" data-sorter-action="remove" data-sorter-idx="' + idx + '">Remove</button>' : '')
+        + '</div></div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('sorterAllList').innerHTML = html;
+}
+
+function sorterRenderRight() {
+  var count = sorterSelectedItems.length;
+  document.getElementById('sorterRightCount').textContent = count + ' added';
+  if (!count) {
+    document.getElementById('sorterSelectedList').innerHTML = '<div class="sorter-empty">Click <strong>+ Add</strong> on any address<br>to build your selection.</div>';
+    document.getElementById('sorterExportPanel').style.display = 'none';
+    return;
+  }
+  var byRoad = {};
+  sorterSelectedItems.forEach(function(item) {
+    if (!byRoad[item.road]) byRoad[item.road] = [];
+    byRoad[item.road].push(item);
+  });
+  var roads = Object.keys(byRoad).sort(function(a,b){ return a.localeCompare(b); });
+  var html = '';
+  roads.forEach(function(road) {
+    var items = byRoad[road].sort(function(a,b){ return sorterGetHouseNumber(a.addr) - sorterGetHouseNumber(b.addr); });
+    html += '<div class="sorter-road-section"><div class="sorter-road-header">' + sorterEsc(road) + '</div>';
+    items.forEach(function(item) {
+      var num = sorterGetHouseNumber(item.addr);
+      var idx = sorterAddrIndex(item.addr);
+      html += '<div class="sorter-addr-card in-selection">'
+        + '<div class="sorter-addr-info">'
+        + (num !== Infinity ? '<div class="sorter-addr-number">No. ' + num + '</div>' : '')
+        + '<div class="sorter-addr-names">' + item.names.map(sorterEsc).join('<br>') + '</div>'
+        + '<div class="sorter-addr-full">' + sorterEsc(item.addr) + '</div>'
+        + '</div>'
+        + '<button class="sorter-btn-remove" data-sorter-action="remove" data-sorter-idx="' + idx + '">Remove</button>'
+        + '</div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('sorterSelectedList').innerHTML = html;
+  document.getElementById('sorterExportPanel').style.display = 'block';
+}
+
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('button[data-sorter-action]');
+  if (!btn) return;
+  var idx = parseInt(btn.dataset.sorterIdx);
+  var addr = sorterAddrLookup[idx];
+  if (btn.dataset.sorterAction === 'add') {
+    if (sorterIsSelected(addr)) return;
+    var road = sorterGetRoadKey(addr);
+    sorterSelectedItems.push({ addr: addr, road: road, names: sorterAddressGroups[road][addr] });
+    sorterRenderLeft(); sorterRenderRight();
+  } else if (btn.dataset.sorterAction === 'remove') {
+    sorterSelectedItems = sorterSelectedItems.filter(function(s){ return s.addr !== addr; });
+    sorterRenderLeft(); sorterRenderRight();
+  }
+});
+
+function sorterClearAll() {
+  document.getElementById('sorterInput').value = '';
+  document.getElementById('sorterStats').textContent = '';
+  document.getElementById('sorterPanels').style.display = 'none';
+  sorterAddressGroups = {};
+  sorterSelectedItems = [];
+  sorterAddrLookup = [];
+}
+
+function sorterSelectionByRoad() {
+  var byRoad = {};
+  sorterSelectedItems.forEach(function(item) {
+    if (!byRoad[item.road]) byRoad[item.road] = [];
+    byRoad[item.road].push(item);
+  });
+  var roads = Object.keys(byRoad).sort(function(a,b){ return a.localeCompare(b); });
+  roads.forEach(function(road){ byRoad[road].sort(function(a,b){ return sorterGetHouseNumber(a.addr) - sorterGetHouseNumber(b.addr); }); });
+  return { byRoad: byRoad, roads: roads };
+}
+
+function sorterBuildAddressText() {
+  var ref = sorterSelectionByRoad();
+  var lines = [];
+  ref.roads.forEach(function(road, r) {
+    if (r > 0) lines.push('');
+    ref.byRoad[road].forEach(function(item){ lines.push(item.addr); });
+  });
+  return lines.join('\n');
+}
+
+function sorterBuildWithNamesText() {
+  var ref = sorterSelectionByRoad();
+  var lines = [];
+  ref.roads.forEach(function(road, r) {
+    if (r > 0) lines.push('');
+    ref.byRoad[road].forEach(function(item) {
+      item.names.forEach(function(name) {
+        lines.push('Resident'); lines.push(name); lines.push(item.addr);
+      });
+    });
+  });
+  return lines.join('\n');
+}
+
+function sorterExportAddresses() { sorterDownload(sorterBuildAddressText(), 'addresses.txt'); }
+function sorterExportWithNames() { sorterDownload(sorterBuildWithNamesText(), 'addresses-with-names.txt'); }
+function sorterCopyAddresses(btn) { sorterCopyText(sorterBuildAddressText(), btn); }
+function sorterCopyWithNames(btn) { sorterCopyText(sorterBuildWithNamesText(), btn); }
+
+function sorterCopyText(text, btn) {
+  var orig = btn.textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){ btn.textContent = '✓ Copied!'; setTimeout(function(){ btn.textContent = orig; }, 2000); });
+  } else {
+    copyText(text, btn, orig); // fallback to existing helper
+  }
+}
+
+function sorterDownload(text, filename) {
+  var blob = new Blob([text], { type: 'text/plain' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ══════════════════════════════════════════════
