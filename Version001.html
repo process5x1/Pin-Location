@@ -157,14 +157,54 @@ h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: 
   .wrapper { height: auto; padding: 0 0 40px; }
   .top-row { flex-direction: column; gap: 0; display: contents; }
   .right {
-    order: 1; position: fixed; top: 52px; left: 0; right: 0;
-    z-index: 500; height: 220px; background: var(--bg); width: 100%;
+    order: 1; position: sticky; top: 52px; left: 0; right: 0;
+    z-index: 500; height: 260px; background: var(--bg); width: 100%;
   }
-  .header { order: 2; margin-top: 220px; padding: 16px 12px 0; }
+  .header { order: 2; padding: 16px 12px 0; }
   .left { order: 3; width: 100%; padding: 12px; }
   .bottom-row { order: 4; overflow: visible; flex: none; padding: 0 12px; }
   #addrTextarea, #sfTextarea { height: 130px; }
-  #mapEl, #sfMapEl { height: 220px; min-height: 220px; border-radius: 0; }
+  #mapEl, #sfMapEl { height: 260px; min-height: 260px; border-radius: 0; }
+
+  /* Lasso mode UI */
+  .lasso-hint {
+    display: flex;
+  }
+}
+
+/* Lasso toggle button — visible only on touch/mobile */
+.lasso-btn {
+  display: none;
+}
+@media (max-width: 680px) {
+  .lasso-btn {
+    display: flex;
+  }
+}
+
+/* Lasso canvas overlay */
+#lassoCanvas, #sfLassoCanvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 600;
+  border-radius: 0;
+}
+
+/* Lasso mode hint bar */
+.lasso-hint {
+  display: none;
+  position: absolute;
+  bottom: 8px; left: 50%; transform: translateX(-50%);
+  background: rgba(26,26,46,0.85);
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px; font-weight: 700;
+  padding: 6px 14px; border-radius: 99px;
+  z-index: 700;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* ── Cards ── */
@@ -386,12 +426,15 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           </div>
         </div>
         <div class="right">
-          <div class="map-wrap">
+          <div class="map-wrap" style="position:relative;">
             <div id="mapEl" class="map-el" style="flex:1;min-height:300px;"></div>
+            <canvas id="lassoCanvas"></canvas>
+            <div class="lasso-hint" id="lassoHint">✦ Draw a circle to select pins</div>
             <div class="map-controls">
               <button class="map-btn" id="locateBtn" title="My location">📍</button>
               <button class="map-btn" id="recentreBtn" title="Re-centre pins">⌖</button>
               <button class="map-btn" id="rotateBtn" title="Rotate map">🧭</button>
+              <button class="map-btn lasso-btn" id="lassoBtn" title="Lasso select">🔘</button>
             </div>
           </div>
         </div>
@@ -464,11 +507,14 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           </div>
         </div>
         <div class="right">
-          <div class="map-wrap">
+          <div class="map-wrap" style="position:relative;">
             <div id="sfMapEl" class="map-el" style="flex:1;min-height:300px;"></div>
+            <canvas id="sfLassoCanvas"></canvas>
+            <div class="lasso-hint" id="sfLassoHint">✦ Draw a circle to select pins</div>
             <div class="map-controls">
               <button class="map-btn" id="sfLocateBtn" title="My location">📍</button>
               <button class="map-btn" id="sfRecentreBtn" title="Re-centre all pins">⌖</button>
+              <button class="map-btn lasso-btn" id="sfLassoBtn" title="Lasso select">🔘</button>
             </div>
           </div>
         </div>
@@ -644,7 +690,145 @@ function initPinnerMap() {
     document.getElementById('selAllBtn').addEventListener('click',function(){var hasAny=Object.keys(selectedAddrs).length>0;var items=document.querySelectorAll('#resultsWrap .r-item');if(hasAny){selectedAddrs={};items.forEach(function(el){el.classList.remove('selected');});}else{items.forEach(function(el){if(el.dataset.addr&&(el.querySelector('.r-tag.ok')||el.querySelector('.r-tag.warn'))){el.classList.add('selected');selectedAddrs[el.dataset.addr]=true;}});}updateSelectionUI();});
     document.getElementById('clearBtn').addEventListener('click',function(){pins.forEach(function(p){if(p.marker)p.marker.remove();});pins=[];textarea.value='';counter.innerHTML='<b>0</b> / 100 addresses';document.getElementById('progressWrap').className='progress-wrap';selectedAddrs={};sortedUnique=[];document.getElementById('resultsWrap').innerHTML='';map.setView([54.5,-3],5);});
 
-    // Organisation
+    // ── Lasso (circle) select ────────────────────────────────────
+    (function(){
+      var lassoBtn = document.getElementById('lassoBtn');
+      var canvas = document.getElementById('lassoCanvas');
+      var hint = document.getElementById('lassoHint');
+      var lassoMode = false;
+      var drawing = false;
+      var points = [];
+
+      function setLassoMode(on) {
+        lassoMode = on;
+        lassoBtn.classList.toggle('active', on);
+        hint.style.display = on ? 'flex' : 'none';
+        if (on) {
+          map.dragging.disable();
+          map.touchZoom.disable();
+          map.scrollWheelZoom.disable();
+          canvas.style.pointerEvents = 'all';
+        } else {
+          map.dragging.enable();
+          map.touchZoom.enable();
+          map.scrollWheelZoom.enable();
+          canvas.style.pointerEvents = 'none';
+          clearCanvas();
+        }
+      }
+
+      lassoBtn.addEventListener('click', function(){ setLassoMode(!lassoMode); });
+
+      function resizeCanvas() {
+        var rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      function clearCanvas() {
+        var ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        points = [];
+      }
+
+      function drawLasso() {
+        if (!points.length) return;
+        var ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (var i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(255,92,53,0.9)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 3]);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,92,53,0.12)';
+        ctx.fill();
+      }
+
+      function pointInPoly(px, py, poly) {
+        var inside = false;
+        for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+          var xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+          if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi)) inside = !inside;
+        }
+        return inside;
+      }
+
+      function selectWithinLasso() {
+        if (points.length < 3) return;
+        var mapRect = canvas.getBoundingClientRect();
+        var changed = false;
+        pins.forEach(function(p) {
+          if (!p.marker) return;
+          var ll = p.marker.getLatLng();
+          var pt = map.latLngToContainerPoint(ll);
+          if (pointInPoly(pt.x, pt.y, points)) {
+            if (!selectedAddrs[p.addr]) {
+              selectedAddrs[p.addr] = { addr: p.addr, num: p.num };
+              var el = document.querySelector('#resultsWrap .r-item[data-addr="' + p.addr.replace(/"/g, '&quot;') + '"]');
+              if (el) el.classList.add('selected');
+              changed = true;
+            }
+          }
+        });
+        if (changed) updateSelectionUI();
+      }
+
+      function getPos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var src = e.touches ? e.touches[0] : e;
+        return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+      }
+
+      canvas.addEventListener('touchstart', function(e) {
+        if (!lassoMode) return;
+        e.preventDefault();
+        resizeCanvas();
+        drawing = true;
+        points = [getPos(e)];
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', function(e) {
+        if (!lassoMode || !drawing) return;
+        e.preventDefault();
+        points.push(getPos(e));
+        drawLasso();
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', function(e) {
+        if (!lassoMode || !drawing) return;
+        e.preventDefault();
+        drawing = false;
+        selectWithinLasso();
+        setTimeout(clearCanvas, 400);
+        setLassoMode(false); // auto-exit lasso after one draw
+      }, { passive: false });
+
+      // Also support mouse for desktop testing
+      canvas.addEventListener('mousedown', function(e) {
+        if (!lassoMode) return;
+        resizeCanvas();
+        drawing = true;
+        points = [getPos(e)];
+      });
+      canvas.addEventListener('mousemove', function(e) {
+        if (!lassoMode || !drawing) return;
+        points.push(getPos(e));
+        drawLasso();
+      });
+      canvas.addEventListener('mouseup', function(e) {
+        if (!lassoMode || !drawing) return;
+        drawing = false;
+        selectWithinLasso();
+        setTimeout(clearCanvas, 400);
+        setLassoMode(false);
+      });
+    })();
+    // ── End lasso ────────────────────────────────────────────────
     var HISTORY_KEY='addrPinnerOrganisation',HISTORY_TTL=24*60*60*1000;
     function loadOrganisation(){try{return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');}catch(e){return[];}}
     function saveOrganisation(entries){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(entries));}catch(e){}}
@@ -777,6 +961,139 @@ function initStreetMap() {
       document.getElementById('sfToolbar').style.display = 'none';
       map.setView([54.5,-3], 5);
     });
+
+    // ── Lasso (circle) select ────────────────────────────────────
+    (function(){
+      var lassoBtn = document.getElementById('sfLassoBtn');
+      var canvas = document.getElementById('sfLassoCanvas');
+      var hint = document.getElementById('sfLassoHint');
+      var lassoMode = false;
+      var drawing = false;
+      var points = [];
+
+      function setLassoMode(on) {
+        lassoMode = on;
+        lassoBtn.classList.toggle('active', on);
+        hint.style.display = on ? 'flex' : 'none';
+        if (on) {
+          map.dragging.disable();
+          map.touchZoom.disable();
+          map.scrollWheelZoom.disable();
+          canvas.style.pointerEvents = 'all';
+        } else {
+          map.dragging.enable();
+          map.touchZoom.enable();
+          map.scrollWheelZoom.enable();
+          canvas.style.pointerEvents = 'none';
+          clearCanvas();
+        }
+      }
+
+      lassoBtn.addEventListener('click', function(){ setLassoMode(!lassoMode); });
+
+      function resizeCanvas() {
+        var rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      function clearCanvas() {
+        var ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        points = [];
+      }
+
+      function drawLasso() {
+        if (!points.length) return;
+        var ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (var i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(255,92,53,0.9)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([6, 3]);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,92,53,0.12)';
+        ctx.fill();
+      }
+
+      function pointInPoly(px, py, poly) {
+        var inside = false;
+        for (var i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+          var xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+          if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi)) inside = !inside;
+        }
+        return inside;
+      }
+
+      function selectWithinLasso() {
+        if (points.length < 3) return;
+        sfPins.forEach(function(p) {
+          if (!p.marker || !p.div) return;
+          var ll = p.marker.getLatLng();
+          var pt = map.latLngToContainerPoint(ll);
+          if (pointInPoly(pt.x, pt.y, points)) {
+            p.div.classList.add('pinned');
+            map.setView(ll, 15, {animate:true});
+            p.marker.openPopup();
+          }
+        });
+      }
+
+      function getPos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var src = e.touches ? e.touches[0] : e;
+        return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+      }
+
+      canvas.addEventListener('touchstart', function(e) {
+        if (!lassoMode) return;
+        e.preventDefault();
+        resizeCanvas();
+        drawing = true;
+        points = [getPos(e)];
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', function(e) {
+        if (!lassoMode || !drawing) return;
+        e.preventDefault();
+        points.push(getPos(e));
+        drawLasso();
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', function(e) {
+        if (!lassoMode || !drawing) return;
+        e.preventDefault();
+        drawing = false;
+        selectWithinLasso();
+        setTimeout(clearCanvas, 400);
+        setLassoMode(false);
+      }, { passive: false });
+
+      canvas.addEventListener('mousedown', function(e) {
+        if (!lassoMode) return;
+        resizeCanvas();
+        drawing = true;
+        points = [getPos(e)];
+      });
+      canvas.addEventListener('mousemove', function(e) {
+        if (!lassoMode || !drawing) return;
+        points.push(getPos(e));
+        drawLasso();
+      });
+      canvas.addEventListener('mouseup', function(e) {
+        if (!lassoMode || !drawing) return;
+        drawing = false;
+        selectWithinLasso();
+        setTimeout(clearCanvas, 400);
+        setLassoMode(false);
+      });
+    })();
+    // ── End lasso ────────────────────────────────────────────────
 
     // ── Main Find ────────────────────────────────────────────────
     document.getElementById('sfFindBtn').addEventListener('click', doFind);
