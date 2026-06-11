@@ -1985,10 +1985,11 @@ showPage = function(name) {
           // Normal multi-line format: Resident / Name / Address
           name = nextLine; addr = addrLine; i += 3;
         } else {
-          // Collapsed format: "Name  Address" on one line (double-space is the separator)
-          var sep = nextLine.indexOf('  ');
-          name = sep > -1 ? nextLine.slice(0, sep).trim() : nextLine;
-          addr = sep > -1 ? nextLine.slice(sep).trim() : '';
+          // Collapsed format: name runs directly into house number with no space
+          // e.g. "FirstName M Surname99 ALEXANDRA CLOSE  HARROW HA2 8QA"
+          var m = nextLine.match(/^(.*?[a-zA-Z])(\d+\s+.+)$/);
+          name = m ? m[1].trim().replace(/\s+/g, ' ') : nextLine;
+          addr = m ? m[2].trim() : '';
           i += 2;
         }
         if (name && addr) entries.push({ name: name, addr: addr });
