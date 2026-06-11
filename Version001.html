@@ -755,7 +755,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     <div class="as-input-card">
       <label class="as-label" for="as-input">Paste resident list</label>
       <textarea class="as-textarea" id="as-input" placeholder="Resident&#10;John Smith&#10;14 Oak Road, London, E1 2AB&#10;&#10;Resident&#10;Jane Doe&#10;7 Maple Street, London, N1 9XY&#10;&#10;Resident&#10;Bob Jones&#10;14 Oak Road, London, E1 2AB"></textarea>
-      <p class="as-hint">Format: <strong>Resident</strong> &rarr; Name &rarr; Full details, with a blank line between each entry.</p>
+      <p class="as-hint">Format: <strong>Resident</strong> &rarr; Name &rarr; Full details, with a blank line between each entry. Android copies are also handled automatically.</p>
       <div class="as-btn-row">
         <button class="as-btn as-btn-primary" id="as-sort-btn">Sort stops</button>
         <button class="as-btn" id="as-clear-btn">Clear all</button>
@@ -1971,13 +1971,27 @@ showPage = function(name) {
   var addressGroups = {}, selectedItems = [], addrLookup = [];
 
   function parseInput(raw) {
-    var lines = raw.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l; });
+    // Android collapses newlines so "Resident\nTim\n14 Oak Rd" becomes "ResidentTim  14 Oak Rd"
+    // Re-insert newlines before any "Resident" that is directly followed by a letter
+    var normalised = raw.replace(/Resident(?=[A-Za-z])/g, '\nResident\n');
+    var lines = normalised.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l; });
     var entries = [], i = 0;
     while (i < lines.length) {
       if (lines[i].toLowerCase() === 'resident') {
-        var name = lines[i+1] || '', addr = lines[i+2] || '';
+        var nextLine = (lines[i+1] || '').trim();
+        var addrLine = (lines[i+2] || '').trim();
+        var name, addr;
+        if (addrLine && addrLine.toLowerCase() !== 'resident') {
+          // Normal multi-line format: Resident / Name / Address
+          name = nextLine; addr = addrLine; i += 3;
+        } else {
+          // Collapsed format: "Name  Address" on one line (double-space is the separator)
+          var sep = nextLine.indexOf('  ');
+          name = sep > -1 ? nextLine.slice(0, sep).trim() : nextLine;
+          addr = sep > -1 ? nextLine.slice(sep).trim() : '';
+          i += 2;
+        }
         if (name && addr) entries.push({ name: name, addr: addr });
-        i += 3;
       } else { i++; }
     }
     return entries;
