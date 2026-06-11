@@ -1981,12 +1981,16 @@ showPage = function(name) {
         var nextLine = (lines[i+1] || '').trim();
         var addrLine = (lines[i+2] || '').trim();
         var name, addr;
-        if (addrLine && addrLine.toLowerCase() !== 'resident') {
+        // Collapsed if nextLine itself has a letter→digit transition (name glued to house number)
+        var isCollapsed = /[a-zA-Z]\d+[a-zA-Z]?\s+/.test(nextLine);
+        // Normal format only when addrLine actually looks like an address (starts with digit)
+        var addrLooksReal = addrLine && /^\d/.test(addrLine) && addrLine.toLowerCase() !== 'resident';
+        if (!isCollapsed && addrLooksReal) {
           // Normal multi-line format: Resident / Name / Address
           name = nextLine; addr = addrLine; i += 3;
         } else {
-          // Collapsed format: name runs directly into house number with no space
-          // e.g. "FirstName M Surname99 ALEXANDRA CLOSE  HARROW HA2 8QA"
+          // Collapsed format: e.g. "Firstname D Surname98 ALEXANDRA CLOSE  HARROW HA2 8QA"
+          // Metadata lines between entries (search time, Showing results…) are safely ignored
           var m = nextLine.match(/^(.*?[a-zA-Z])(\d+[a-zA-Z]?\s+.+)$/);
           name = m ? m[1].trim().replace(/\s+/g, ' ') : nextLine;
           addr = m ? m[2].trim() : '';
