@@ -1987,7 +1987,7 @@ showPage = function(name) {
         } else {
           // Collapsed format: name runs directly into house number with no space
           // e.g. "FirstName M Surname99 ALEXANDRA CLOSE  HARROW HA2 8QA"
-          var m = nextLine.match(/^(.*?[a-zA-Z])(\d+\s+.+)$/);
+          var m = nextLine.match(/^(.*?[a-zA-Z])(\d+[a-zA-Z]?\s+.+)$/);
           name = m ? m[1].trim().replace(/\s+/g, ' ') : nextLine;
           addr = m ? m[2].trim() : '';
           i += 2;
