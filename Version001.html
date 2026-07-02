@@ -545,7 +545,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     <button class="tool-card" onclick="showPage('pinner')">
       <div class="tool-card-icon">📍</div>
       <div class="tool-card-title">Map Pinner</div>
-      <div class="tool-card-desc">Paste up to 100 stops — one per line — and pin them all on an interactive map. Select, copy and assign stops to teams.</div>
+      <div class="tool-card-desc">Paste up to 200 stops — one per line — and pin them all on an interactive map. Select, copy and assign stops to teams.</div>
       <div class="tool-card-cta">Open Map Pinner</div>
     </button>
     <button class="tool-card" onclick="showPage('street')">
@@ -578,7 +578,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     <div class="wrapper">
       <div class="header">
         <h1>Map Pinner</h1>
-        <p class="subtitle">PASTE UP TO 100 STOPS — ONE PER LINE — PIN THEM ALL ON THE MAP</p>
+        <p class="subtitle">PASTE UP TO 200 STOPS — ONE PER LINE — PIN THEM ALL ON THE MAP</p>
       </div>
       <div class="top-row">
         <div class="left">
@@ -586,7 +586,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
             <div class="card-title">Your stops</div>
             <div class="card-hint">One stop per line. Include postcode for best accuracy.</div>
             <textarea class="addr-textarea" id="addrTextarea" placeholder="10 Downing Street, SW1A 2AA&#10;221B Baker Street, NW1 6XE&#10;1 Princes St, Edinburgh EH2 2ER"></textarea>
-            <div class="counter" id="counter"><b>0</b> / 100 stops</div>
+            <div class="counter" id="counter"><b>0</b> / 200 stops</div>
             <div class="btn-row">
               <button class="primary" id="pinBtn">&#128205; Pin All</button>
               <button class="secondary" id="clusterQuickBtn" title="Group stops by proximity">⬡ Group</button>
@@ -865,7 +865,7 @@ function copyText(text, btn, label) {
 function initPinnerMap() {
   (function(){
     'use strict';
-    var sortedUnique=[],MAX=100,pins=[],selectedAddrs={},assignedAddrs={};window._pinnerPins=pins;
+    var sortedUnique=[],MAX=200,pins=[],selectedAddrs={},assignedAddrs={};window._pinnerPins=pins;
     var COLORS=['#ff5c35','#1a8a3a','#2980b9','#8e44ad','#e67e22','#16a085','#c0392b','#2471a3','#6c3483','#d35400','#1abc9c','#2c3e50','#e74c3c','#1a5276','#7d6608','#6c5ce7','#00b894','#e91e63','#0288d1','#558b2f','#ff5c35','#1a8a3a','#2980b9','#8e44ad','#e67e22','#16a085','#c0392b','#2471a3','#6c3483','#d35400','#1abc9c','#2c3e50','#e74c3c','#1a5276','#7d6608','#6c5ce7','#00b894','#e91e63','#0288d1','#558b2f','#ff5c35','#1a8a3a','#2980b9','#8e44ad','#e67e22','#16a085','#c0392b','#2471a3','#6c3483','#d35400'];
 
     var map=L.map('mapEl',{attributionControl:false,zoomControl:true});
@@ -968,7 +968,7 @@ function initPinnerMap() {
     var textarea=document.getElementById('addrTextarea');
     var counter=document.getElementById('counter');
     function getLines(){return textarea.value.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length>0;}).slice(0,MAX);}
-    textarea.addEventListener('input',function(){var n=getLines().length;counter.innerHTML='<b>'+n+'</b> / 100 stop'+(n!==1?'es':'');});
+    textarea.addEventListener('input',function(){var n=getLines().length;counter.innerHTML='<b>'+n+'</b> / 200 stop'+(n!==1?'es':'');});
 
     // Pin All
     document.getElementById('pinBtn').addEventListener('click',function(){
@@ -1086,7 +1086,7 @@ function initPinnerMap() {
       }
       updateSelectionUI();
     });
-    document.getElementById('clearBtn').addEventListener('click',function(){pins.forEach(function(p){if(p.marker)p.marker.remove();});pins=[];textarea.value='';counter.innerHTML='<b>0</b> / 100 stops';document.getElementById('progressWrap').className='progress-wrap';selectedAddrs={};assignedAddrs={};sortedUnique=[];document.getElementById('resultsWrap').innerHTML='';mapFilter='all';var fb=document.getElementById('filterBtn');fb.textContent='ALL';fb.classList.remove('active');map.setView([54.5,-3],5);});
+    document.getElementById('clearBtn').addEventListener('click',function(){pins.forEach(function(p){if(p.marker)p.marker.remove();});pins=[];textarea.value='';counter.innerHTML='<b>0</b> / 200 stops';document.getElementById('progressWrap').className='progress-wrap';selectedAddrs={};assignedAddrs={};sortedUnique=[];document.getElementById('resultsWrap').innerHTML='';mapFilter='all';var fb=document.getElementById('filterBtn');fb.textContent='ALL';fb.classList.remove('active');map.setView([54.5,-3],5);});
 
     // ── Map search ────────────────────────────────────────────────
     (function(){
