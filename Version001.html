@@ -532,7 +532,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     <div class="nav-links">
       <button class="nav-link active" data-page="home" onclick="showPage('home')">Home</button>
       <button class="nav-link" data-page="pinner" onclick="showPage('pinner')">Map Pinner</button>
-      <button class="nav-link" data-page="street" onclick="showPage('street')">Street Finder</button>
+
       <button class="nav-link" data-page="sorter" onclick="showPage('sorter')">List Sorter</button>
     </div>
   </nav>
@@ -548,12 +548,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <div class="tool-card-desc">Paste up to 200 stops — one per line — and pin them all on an interactive map. Select, copy and assign stops to teams.</div>
       <div class="tool-card-cta">Open Map Pinner</div>
     </button>
-    <button class="tool-card" onclick="showPage('street')">
-      <div class="tool-card-icon">🔍</div>
-      <div class="tool-card-title">Street Finder</div>
-      <div class="tool-card-desc">Search for a street and find all matching roads. Click any result to see it on the map and explore the area.</div>
-      <div class="tool-card-cta">Open Street Finder</div>
-    </button>
+
     <button class="tool-card" onclick="showPage('sorter')">
       <div class="tool-card-icon">🗂️</div>
       <div class="tool-card-title">List Sorter</div>
@@ -571,7 +566,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <div class="nav-links">
         <button class="nav-link" data-page="home" onclick="showPage('home')">Home</button>
         <button class="nav-link active" data-page="pinner" onclick="showPage('pinner')">Map Pinner</button>
-        <button class="nav-link" data-page="street" onclick="showPage('street')">Street Finder</button>
+  
         <button class="nav-link" data-page="sorter" onclick="showPage('sorter')">List Sorter</button>
       </div>
     </nav>
@@ -677,7 +672,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 </div>
 
 <!-- ══ STREET FINDER PAGE ══ -->
-<div class="page" id="page-street">
+<div class="page" id="page-street" style="display:none!important">
   <div class="inner-page">
     <nav class="nav">
       <span class="nav-logo" onclick="showPage('home')"><span class="logo-pin">📍</span> The Round</span>
@@ -742,7 +737,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     <div class="nav-links">
       <button class="nav-link" data-page="home" onclick="showPage('home')">Home</button>
       <button class="nav-link" data-page="pinner" onclick="showPage('pinner')">Map Pinner</button>
-      <button class="nav-link" data-page="street" onclick="showPage('street')">Street Finder</button>
+
       <button class="nav-link active" data-page="sorter" onclick="showPage('sorter')">List Sorter</button>
     </div>
   </nav>
@@ -754,7 +749,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 
     <div class="as-input-card">
       <label class="as-label" for="as-input">Paste resident list</label>
-      <textarea class="as-textarea" id="as-input" placeholder="Resident&#10;John Smith&#10;14 Oak Road, London, E1 2AB&#10;&#10;Resident&#10;Jane Doe&#10;7 Maple Street, London, N1 9XY&#10;&#10;Resident&#10;Bob Jones&#10;14 Oak Road, London, E1 2AB"></textarea>
+      <textarea class="as-textarea" id="as-input" placeholder="Resident&#10;Ada Lovelace&#10;12 St James Square, London, SW1Y 4RB&#10;&#10;Resident&#10;Alan Turing&#10;5 Adlington Road, Wilmslow, SK9 2BG&#10;&#10;Resident&#10;Grace Hopper&#10;3 Naval Crescent, Portsmouth, PO1 3LJ"></textarea>
       <p class="as-hint">Format: <strong>Resident</strong> &rarr; Name &rarr; Full details, with a blank line between each entry. Android copies are also handled automatically.</p>
       <div class="as-btn-row">
         <button class="as-btn as-btn-primary" id="as-sort-btn">Sort stops</button>
