@@ -1398,24 +1398,10 @@ function initPinnerMap() {
       }
 
       var groupSize = parseInt(document.getElementById('clusterSize').value) || 10;
-      var hardCap = Math.ceil(groupSize * 1.25); // 25% soft cap
       var k = Math.max(1, Math.ceil(validPins.length / groupSize));
 
       var points = validPins.map(function(p){ return { lat:p.lat, lon:p.lon, pin:p }; });
-      var groups = kMeans(points, k, 80);
-
-      // Soft cap: split any group that exceeds hardCap by re-clustering it
-      var finalGroups = [];
-      groups.forEach(function(group) {
-        if (group.length <= hardCap) {
-          finalGroups.push(group);
-        } else {
-          // Split this oversized group into sub-groups
-          var subK = Math.ceil(group.length / groupSize);
-          var subGroups = kMeans(group, subK, 40);
-          subGroups.forEach(function(sg){ finalGroups.push(sg); });
-        }
-      });
+      var finalGroups = kMeans(points, k, 80);
 
       // Sort groups by centroid lat desc (north first)
       finalGroups.sort(function(a, b){
@@ -1472,9 +1458,7 @@ function initPinnerMap() {
           ? (maxDist/1000).toFixed(1)+'km spread'
           : Math.round(maxDist)+'m spread';
 
-        var warningBadge = isOver
-          ? '<span style="font-size:9px;padding:2px 6px;border-radius:99px;background:rgba(230,126,34,.15);color:#e67e22;margin-left:4px;">over target</span>'
-          : '';
+        var warningBadge = '';
 
         div.innerHTML = '<div class="cluster-group-head">'
           + '<div class="cluster-swatch" style="background:'+color+'"></div>'
