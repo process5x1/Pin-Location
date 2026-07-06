@@ -622,9 +622,10 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       </div>
       <div class="bottom-row">
         <div class="card results-card" id="resultsCard">
-          <div class="results-toolbar">
+          <div class="results-toolbar" style="cursor:pointer;" id="resultsToggleBar">
             <div class="card-title" style="margin-bottom:0;flex-shrink:0;">Results</div>
             <span id="selCount" style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;"></span>
+            <button id="resultsCollapseBtn" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted);padding:0 0 0 10px;line-height:1;" title="Collapse">▲</button>
           </div>
           <!-- Search -->
           <div style="position:relative;margin-bottom:10px;">
@@ -997,6 +998,22 @@ function initPinnerMap() {
 
     // Selection
     function updateSelectionUI(){var count=Object.keys(selectedAddrs).length;document.getElementById('selCount').textContent=count>0?count+' selected':'';refreshMapHighlights();}
+
+    // ── Results collapse ──────────────────────────────────────────
+    var resultsCollapsed = false;
+    var resultsBody = document.getElementById('resultsCard').querySelector('.results-toolbar').nextElementSibling;
+    document.getElementById('resultsToggleBar').addEventListener('click', function(e){
+      if(e.target.tagName === 'BUTTON' && e.target.id !== 'resultsCollapseBtn') return;
+      resultsCollapsed = !resultsCollapsed;
+      var card = document.getElementById('resultsCard');
+      var btn = document.getElementById('resultsCollapseBtn');
+      var children = card.children;
+      for(var i = 1; i < children.length; i++){
+        children[i].style.display = resultsCollapsed ? 'none' : '';
+      }
+      btn.textContent = resultsCollapsed ? '▼' : '▲';
+      btn.title = resultsCollapsed ? 'Expand' : 'Collapse';
+    });
     // ── Results search filter ─────────────────────────────────────
     var resultsSearchInput = document.getElementById('resultsSearch');
     var resultsSearchClear = document.getElementById('resultsSearchClear');
@@ -1419,7 +1436,6 @@ function initPinnerMap() {
 
       finalGroups.forEach(function(group, gi) {
         var color = CLUSTER_COLORS[gi % CLUSTER_COLORS.length];
-        var isOver = group.length > hardCap;
 
         // Draw convex-hull polygon on map
         if (group.length >= 3) {
