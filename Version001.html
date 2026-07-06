@@ -583,15 +583,17 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
             <div class="card-hint">One stop per line. Include postcode for best accuracy.</div>
             <textarea class="addr-textarea" id="addrTextarea" placeholder="10 Downing Street, SW1A 2AA&#10;221B Baker Street, NW1 6XE&#10;1 Princes St, Edinburgh EH2 2ER"></textarea>
             <div class="counter" id="counter"><b>0</b> / 200 stops</div>
-            <div class="btn-row">
-              <button class="primary" id="pinBtn">&#128205; Pin All</button>
-              <div id="clusterQuickBtn" title="Group stops by location" style="display:flex;align-items:center;gap:5px;background:transparent;border:1.5px solid var(--border);border-radius:9px;padding:0 12px;cursor:pointer;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--muted);transition:all .15s;height:100%;" onmouseenter="this.style.borderColor='var(--ink)';this.style.color='var(--ink)';" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)';">
+            <div class="btn-row" style="align-items:stretch;">
+              <button class="primary" id="pinBtn" style="min-height:42px;">&#128205; Pin All</button>
+              <div id="clusterQuickBtn" title="Group by location" style="display:flex;align-items:center;gap:5px;background:transparent;border:1.5px solid var(--border);border-radius:9px;padding:0 10px;cursor:pointer;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--muted);transition:all .15s;min-height:42px;" onmouseenter="this.style.borderColor='var(--ink)';this.style.color='var(--ink)';" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)';">
                 <span style="pointer-events:none;">Create</span>
-                <input id="clusterSizeInline" type="number" min="2" max="200" value="10" onclick="event.stopPropagation();"
-                  style="width:38px;padding:4px 4px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);outline:none;text-align:center;">
-                <span style="pointer-events:none;">Groups</span>
+                <input id="clusterGroupCount" type="number" min="1" max="100" value="10" onclick="event.stopPropagation();"
+                  style="width:36px;padding:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);outline:none;text-align:center;">
+                <span style="pointer-events:none;">groups, min</span>
+                <input id="clusterMinSize" type="number" min="1" max="100" value="6" onclick="event.stopPropagation();"
+                  style="width:36px;padding:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);outline:none;text-align:center;">
               </div>
-              <button class="secondary" id="clearBtn">Clear</button>
+              <button class="secondary" id="clearBtn" style="min-height:42px;">Clear</button>
             </div>
             <div class="progress-wrap" id="progressWrap">
               <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
@@ -1337,20 +1339,13 @@ function initPinnerMap() {
     });
 
     document.getElementById('clusterQuickBtn').addEventListener('click', function(e){
-      if(e.target.id === 'clusterSizeInline') return;
-      document.getElementById('clusterSize').value = document.getElementById('clusterSizeInline').value;
+      if(e.target.id === 'clusterGroupCount' || e.target.id === 'clusterMinSize') return;
       document.getElementById('clusterCard').style.display = 'block';
       runClustering();
     });
 
-    document.getElementById('clusterRunBtn').addEventListener('click', function(){
-      document.getElementById('clusterSizeInline').value = document.getElementById('clusterSize').value;
-      runClustering();
-    });
+    document.getElementById('clusterRunBtn').addEventListener('click', runClustering);
     document.getElementById('clusterClearBtn').addEventListener('click', clearClusters);
-    document.getElementById('clusterSizeInline').addEventListener('change', function(){
-      document.getElementById('clusterSize').value = this.value;
-    });
 
     function haversine(a, b) {
       var R = 6371000;
@@ -1423,11 +1418,38 @@ function initPinnerMap() {
         return;
       }
 
-      var groupSize = parseInt(document.getElementById('clusterSize').value) || 10;
-      var k = Math.max(1, Math.ceil(validPins.length / groupSize));
+      var k = Math.max(1, Math.min(parseInt(document.getElementById('clusterGroupCount').value) || 10, validPins.length));
+      var minSize = Math.max(1, parseInt(document.getElementById('clusterMinSize').value) || 1);
 
       var points = validPins.map(function(p){ return { lat:p.lat, lon:p.lon, pin:p }; });
       var finalGroups = kMeans(points, k, 80);
+
+      // Merge groups smaller than minSize into nearest neighbour group
+      var changed = true;
+      while(changed) {
+        changed = false;
+        for(var i = 0; i < finalGroups.length; i++) {
+          if(finalGroups[i].length < minSize && finalGroups.length > 1) {
+            // Find centroid of this group
+            var cLat = finalGroups[i].reduce(function(s,p){ return s+p.lat; },0) / finalGroups[i].length;
+            var cLon = finalGroups[i].reduce(function(s,p){ return s+p.lon; },0) / finalGroups[i].length;
+            // Find nearest other group by centroid distance
+            var nearest = -1, nearestD = Infinity;
+            for(var j = 0; j < finalGroups.length; j++) {
+              if(j === i) continue;
+              var jLat = finalGroups[j].reduce(function(s,p){ return s+p.lat; },0) / finalGroups[j].length;
+              var jLon = finalGroups[j].reduce(function(s,p){ return s+p.lon; },0) / finalGroups[j].length;
+              var d = haversine({lat:cLat,lon:cLon},{lat:jLat,lon:jLon});
+              if(d < nearestD){ nearestD = d; nearest = j; }
+            }
+            // Merge into nearest
+            finalGroups[nearest] = finalGroups[nearest].concat(finalGroups[i]);
+            finalGroups.splice(i, 1);
+            changed = true;
+            break;
+          }
+        }
+      }
 
       // Sort groups by centroid lat desc (north first)
       finalGroups.sort(function(a, b){
