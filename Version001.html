@@ -585,7 +585,12 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
             <div class="counter" id="counter"><b>0</b> / 200 stops</div>
             <div class="btn-row">
               <button class="primary" id="pinBtn">&#128205; Pin All</button>
-              <button class="secondary" id="clusterQuickBtn" title="Group stops by location">⬡ Group by Location</button>
+              <div id="clusterQuickBtn" title="Group stops by location" style="display:flex;align-items:center;gap:5px;background:transparent;border:1.5px solid var(--border);border-radius:9px;padding:0 12px;cursor:pointer;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--muted);transition:all .15s;height:100%;" onmouseenter="this.style.borderColor='var(--ink)';this.style.color='var(--ink)';" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)';">
+                <span style="pointer-events:none;">Create</span>
+                <input id="clusterSizeInline" type="number" min="2" max="200" value="10" onclick="event.stopPropagation();"
+                  style="width:38px;padding:4px 4px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--ink);outline:none;text-align:center;">
+                <span style="pointer-events:none;">Groups</span>
+              </div>
               <button class="secondary" id="clearBtn">Clear</button>
             </div>
             <div class="progress-wrap" id="progressWrap">
@@ -1331,13 +1336,21 @@ function initPinnerMap() {
       card.style.display = card.style.display === 'none' ? 'block' : 'none';
     });
 
-    document.getElementById('clusterQuickBtn').addEventListener('click', function(){
+    document.getElementById('clusterQuickBtn').addEventListener('click', function(e){
+      if(e.target.id === 'clusterSizeInline') return;
+      document.getElementById('clusterSize').value = document.getElementById('clusterSizeInline').value;
       document.getElementById('clusterCard').style.display = 'block';
       runClustering();
     });
 
-    document.getElementById('clusterRunBtn').addEventListener('click', runClustering);
+    document.getElementById('clusterRunBtn').addEventListener('click', function(){
+      document.getElementById('clusterSizeInline').value = document.getElementById('clusterSize').value;
+      runClustering();
+    });
     document.getElementById('clusterClearBtn').addEventListener('click', clearClusters);
+    document.getElementById('clusterSizeInline').addEventListener('change', function(){
+      document.getElementById('clusterSize').value = this.value;
+    });
 
     function haversine(a, b) {
       var R = 6371000;
