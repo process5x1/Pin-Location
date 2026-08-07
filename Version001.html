@@ -643,8 +643,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   overflow-y: auto; text-align: center; padding: 20px 16px;
 }
 #inv-camera-capture-view,
-#inv-count-review-view,
-#inv-mark-view { width: 100%; }
+#inv-count-review-view { width: 100%; }
 .inv-camera-videowrap {
   position: relative; width: min(70vw, 280px); aspect-ratio: 3 / 4;
   border-radius: 10px; overflow: hidden; background: #111; margin: 0 auto 14px;
@@ -667,12 +666,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 .inv-count-review-number {
   font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: #fff; min-width: 50px; text-align: center;
 }
-#inv-count-review-view .inv-camera-hint,
-#inv-mark-view .inv-camera-hint { max-width: 320px; margin-left: auto; margin-right: auto; }
-.inv-mark-line {
-  position: absolute; left: 0; right: 0; height: 2px; background: #34c759;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.4); pointer-events: none;
-}
+#inv-count-review-view .inv-camera-hint { max-width: 320px; margin-left: auto; margin-right: auto; }
 .inv-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 </style>
 </head>
@@ -1117,15 +1111,6 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     <div class="inv-camera-controls">
       <button class="inv-btn" onclick="invRetakeCount()">Retake</button>
       <button class="inv-btn inv-btn-primary" onclick="invConfirmCount()">Use this count</button>
-    </div>
-  </div>
-
-  <div id="inv-mark-view" style="display:none;">
-    <div class="inv-count-review-imgwrap" id="inv-mark-imgwrap"></div>
-    <p class="inv-camera-hint" id="inv-mark-hint">Tap the top edge</p>
-    <div class="inv-camera-controls">
-      <button class="inv-btn" onclick="invMarkReset()">Retry taps</button>
-      <button class="inv-btn inv-btn-primary" id="inv-mark-continue-btn" onclick="invMarkContinue()" disabled>Continue</button>
     </div>
   </div>
 </div>
@@ -1953,16 +1938,9 @@ var invCameraStream = null;
 var invCountEntryId = null;
 var invCountValue = 0;
 var invCountMaxDetected = 0;
-var invReviewSourceMode = null;
-var invMeasureRefPx = 0;
-var invMarkMode = null;
-var invMarkCanvas = null;
-var invMarkTapsY = [];
 
 var INV_CAMERA_HINTS = {
-  'count': 'Photograph the side of the stack, keeping it level within the frame',
-  'measure-single': 'Photograph a SINGLE copy from the side, keeping it level within the frame',
-  'measure-stack': 'Now photograph the FULL STACK from the side, at the same distance as before'
+  'count': 'Photograph the side of the stack, keeping it level within the frame'
 };
 
 function invOpenCamera(target, countEntryId) {
@@ -1970,7 +1948,6 @@ function invOpenCamera(target, countEntryId) {
   invCountEntryId = countEntryId || null;
   document.getElementById('inv-camera-capture-view').style.display = '';
   document.getElementById('inv-count-review-view').style.display = 'none';
-  document.getElementById('inv-mark-view').style.display = 'none';
   document.getElementById('inv-camera-hint').textContent = INV_CAMERA_HINTS[target] || 'Line the publication up inside the yellow frame';
   var modal = document.getElementById('inv-camera-modal');
   var errEl = document.getElementById('inv-camera-error');
@@ -1997,14 +1974,8 @@ function invCloseCamera() {
   invStopCameraStream();
   document.getElementById('inv-camera-modal').style.display = 'none';
   document.getElementById('inv-count-review-imgwrap').innerHTML = '';
-  document.getElementById('inv-mark-imgwrap').innerHTML = '';
   invCameraTarget = null;
   invCountEntryId = null;
-  invReviewSourceMode = null;
-  invMeasureRefPx = 0;
-  invMarkMode = null;
-  invMarkCanvas = null;
-  invMarkTapsY = [];
 }
 
 function invCropGuideCanvas(video) {
@@ -2041,14 +2012,7 @@ function invCaptureFromCamera() {
   if (invCameraTarget === 'count') {
     invStopCameraStream();
     var result = invDetectStackLines(canvas);
-    invReviewSourceMode = 'count';
     invShowCountReview(canvas, result.peaks);
-    return;
-  }
-
-  if (invCameraTarget === 'measure-single' || invCameraTarget === 'measure-stack') {
-    invStopCameraStream();
-    invShowMarkView(canvas, invCameraTarget);
     return;
   }
 
@@ -2158,11 +2122,7 @@ function invAdjustCount(delta) {
 
 function invRetakeCount() {
   document.getElementById('inv-count-review-view').style.display = 'none';
-  if (invReviewSourceMode === 'measure') {
-    invOpenCamera('measure-stack', invCountEntryId); // reuse the already-measured single-copy reference
-  } else {
-    invOpenCamera('count', invCountEntryId);
-  }
+  invOpenCamera('count', invCountEntryId);
 }
 
 function invConfirmCount() {
@@ -2171,88 +2131,6 @@ function invConfirmCount() {
     if (input) input.value = invCountValue;
   }
   invCloseCamera();
-}
-
-// ── Stack measurement (single-copy reference vs. stack height) ──
-function invShowMarkView(canvas, mode) {
-  invMarkMode = mode;
-  invMarkCanvas = canvas;
-  invMarkTapsY = [];
-
-  document.getElementById('inv-camera-capture-view').style.display = 'none';
-  document.getElementById('inv-count-review-view').style.display = 'none';
-  document.getElementById('inv-mark-view').style.display = 'block';
-
-  var wrap = document.getElementById('inv-mark-imgwrap');
-  wrap.innerHTML = '';
-  wrap.appendChild(canvas);
-  document.getElementById('inv-mark-continue-btn').disabled = true;
-  invUpdateMarkHint();
-  canvas.onclick = invHandleMarkTap;
-}
-
-function invUpdateMarkHint() {
-  var subject = invMarkMode === 'measure-single' ? 'the single copy' : 'the stack';
-  var hint;
-  if (invMarkTapsY.length === 0) hint = 'Tap the top edge of ' + subject;
-  else if (invMarkTapsY.length === 1) hint = 'Now tap the bottom edge of ' + subject;
-  else hint = 'Got both points — tap Retry to redo, or Continue';
-  document.getElementById('inv-mark-hint').textContent = hint;
-}
-
-function invHandleMarkTap(evt) {
-  if (invMarkTapsY.length >= 2) return;
-  var canvas = invMarkCanvas;
-  var rect = canvas.getBoundingClientRect();
-  var clientY = (evt.touches && evt.touches[0]) ? evt.touches[0].clientY : evt.clientY;
-  var fracY = Math.min(1, Math.max(0, (clientY - rect.top) / rect.height));
-  var yInCanvas = fracY * canvas.height;
-  invMarkTapsY.push(yInCanvas);
-
-  var line = document.createElement('div');
-  line.className = 'inv-mark-line';
-  line.style.top = (fracY * 100) + '%';
-  document.getElementById('inv-mark-imgwrap').appendChild(line);
-
-  invUpdateMarkHint();
-  if (invMarkTapsY.length === 2) document.getElementById('inv-mark-continue-btn').disabled = false;
-}
-
-function invMarkReset() {
-  invMarkTapsY = [];
-  document.getElementById('inv-mark-imgwrap').querySelectorAll('.inv-mark-line').forEach(function(el) { el.remove(); });
-  document.getElementById('inv-mark-continue-btn').disabled = true;
-  invUpdateMarkHint();
-}
-
-function invMarkContinue() {
-  if (invMarkTapsY.length !== 2) return;
-  var px = Math.abs(invMarkTapsY[1] - invMarkTapsY[0]);
-
-  if (invMarkMode === 'measure-single') {
-    invMeasureRefPx = px;
-    document.getElementById('inv-mark-view').style.display = 'none';
-    invOpenCamera('measure-stack', invCountEntryId);
-    return;
-  }
-
-  // measure-stack: compute ratio and show the adjustable review
-  var count = invMeasureRefPx > 0 ? Math.round(px / invMeasureRefPx) : 0;
-  invReviewSourceMode = 'measure';
-  invShowMeasureReview(invMarkCanvas, count);
-}
-
-function invShowMeasureReview(canvas, count) {
-  document.getElementById('inv-count-review-hint').textContent = 'Estimated from stack height ÷ single-copy height — this is an estimate. Adjust the number if it looks off, then confirm.';
-  document.getElementById('inv-mark-view').style.display = 'none';
-  var reviewView = document.getElementById('inv-count-review-view');
-  reviewView.style.display = 'block';
-  var wrap = document.getElementById('inv-count-review-imgwrap');
-  wrap.innerHTML = '';
-  wrap.appendChild(canvas);
-
-  invCountValue = Math.max(0, count);
-  document.getElementById('inv-count-review-number').textContent = invCountValue;
 }
 
 function addInvEntry() {
@@ -2342,8 +2220,7 @@ function renderInvItem(entry) {
       '<input type="date" class="inv-input" id="inv-amend-date-' + entry.id + '" value="' + escInv(entry.lastCounted || todayStr) + '">' +
       '<label class="inv-label">Count</label>' +
       '<input type="number" step="1" inputmode="numeric" class="inv-input" id="inv-amend-count-' + entry.id + '" value="' + (entry.count != null ? escInv(entry.count) : '') + '">' +
-      '<div class="inv-btn-row"><button class="inv-btn" data-count-photo="' + entry.id + '">Count from Photo</button>' +
-      '<button class="inv-btn" data-measure-stack="' + entry.id + '">Measure Stack</button></div>' +
+      '<div class="inv-btn-row"><button class="inv-btn" data-count-photo="' + entry.id + '">Count from Photo</button></div>' +
       '<div class="inv-btn-row"><button class="inv-btn inv-btn-primary" data-amend-save="' + entry.id + '">Save</button>' +
       '<button class="inv-btn" data-amend-cancel="1">Cancel</button></div></div>';
     return div;
@@ -2411,9 +2288,6 @@ function renderInvList() {
   });
   wrap.querySelectorAll('[data-count-photo]').forEach(function(btn) {
     btn.addEventListener('click', function() { invOpenCamera('count', btn.dataset.countPhoto); });
-  });
-  wrap.querySelectorAll('[data-measure-stack]').forEach(function(btn) {
-    btn.addEventListener('click', function() { invMeasureRefPx = 0; invOpenCamera('measure-single', btn.dataset.measureStack); });
   });
   wrap.querySelectorAll('[data-amend-cancel]').forEach(function(btn) {
     btn.addEventListener('click', function() { invEditingId = null; renderInvList(); });
