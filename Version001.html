@@ -640,16 +640,14 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 
 #page-inventory .inv-camera-modal {
   position: fixed; inset: 0; z-index: 2000; background: #0a0a0a;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-  gap: 14px; padding: 16px; overflow-y: auto;
+  overflow-y: auto; text-align: center; padding: 20px 16px;
 }
-#page-inventory #inv-camera-capture-view {
-  display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; flex-shrink: 0;
-  margin: auto 0;
-}
+#page-inventory #inv-camera-capture-view,
+#page-inventory #inv-count-review-view,
+#page-inventory #inv-mark-view { width: 100%; }
 #page-inventory .inv-camera-videowrap {
-  position: relative; width: min(82vw, 360px); aspect-ratio: 3 / 4; flex-shrink: 0;
-  border-radius: 10px; overflow: hidden; background: #111;
+  position: relative; width: min(70vw, 280px); aspect-ratio: 3 / 4;
+  border-radius: 10px; overflow: hidden; background: #111; margin: 0 auto 14px;
 }
 #page-inventory #inv-camera-video { width: 100%; height: 100%; object-fit: cover; display: block; }
 #page-inventory .inv-camera-guide {
@@ -657,28 +655,20 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   border: 3px solid #ffd60a; border-radius: 6px; box-shadow: 0 0 0 9999px rgba(0,0,0,.5);
   pointer-events: none;
 }
-#page-inventory .inv-camera-hint { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #cfcfcf; text-align: center; flex-shrink: 0; }
-#page-inventory .inv-camera-controls { display: flex; gap: 12px; flex-shrink: 0; }
-#page-inventory .inv-camera-error { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ff8a7a; text-align: center; max-width: 320px; flex-shrink: 0; }
-#page-inventory #inv-count-review-view {
-  display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; flex-shrink: 0;
-  margin: auto 0;
-}
+#page-inventory .inv-camera-hint { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #cfcfcf; margin-bottom: 14px; }
+#page-inventory .inv-camera-controls { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; }
+#page-inventory .inv-camera-error { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ff8a7a; max-width: 320px; margin: 10px auto 0; }
 #page-inventory .inv-count-review-imgwrap {
-  position: relative; width: min(82vw, 360px); max-height: 50vh; overflow: hidden; border-radius: 10px;
-  background: #111; flex-shrink: 0;
+  position: relative; width: min(70vw, 280px); max-height: 40vh; overflow: hidden; border-radius: 10px;
+  background: #111; margin: 0 auto 14px;
 }
 #page-inventory .inv-count-review-imgwrap canvas { width: 100%; display: block; cursor: crosshair; touch-action: none; }
-#page-inventory .inv-count-review-result { display: flex; align-items: center; gap: 18px; flex-shrink: 0; }
+#page-inventory .inv-count-review-result { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 14px; }
 #page-inventory .inv-count-review-number {
   font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: #fff; min-width: 50px; text-align: center;
 }
 #page-inventory #inv-count-review-view .inv-camera-hint,
-#page-inventory #inv-mark-view .inv-camera-hint { max-width: 320px; }
-#page-inventory #inv-mark-view {
-  display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; flex-shrink: 0;
-  margin: auto 0;
-}
+#page-inventory #inv-mark-view .inv-camera-hint { max-width: 320px; margin-left: auto; margin-right: auto; }
 #page-inventory .inv-mark-line {
   position: absolute; left: 0; right: 0; height: 2px; background: #34c759;
   box-shadow: 0 0 0 1px rgba(0,0,0,.4); pointer-events: none;
@@ -1981,7 +1971,7 @@ function invOpenCamera(target, countEntryId) {
   var modal = document.getElementById('inv-camera-modal');
   var errEl = document.getElementById('inv-camera-error');
   errEl.style.display = 'none';
-  modal.style.display = 'flex';
+  modal.style.display = 'block';
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
     .then(function(stream) {
       invCameraStream = stream;
@@ -2147,7 +2137,7 @@ function invShowCountReview(canvas, peaks) {
   document.getElementById('inv-count-review-hint').textContent = 'Detected lines are marked in red — this is an estimate. Adjust the number if any were missed or doubled up, then confirm.';
   document.getElementById('inv-camera-capture-view').style.display = 'none';
   var reviewView = document.getElementById('inv-count-review-view');
-  reviewView.style.display = 'flex';
+  reviewView.style.display = 'block';
   var wrap = document.getElementById('inv-count-review-imgwrap');
   wrap.innerHTML = '';
   wrap.appendChild(canvas);
@@ -2187,7 +2177,7 @@ function invShowMarkView(canvas, mode) {
 
   document.getElementById('inv-camera-capture-view').style.display = 'none';
   document.getElementById('inv-count-review-view').style.display = 'none';
-  document.getElementById('inv-mark-view').style.display = 'flex';
+  document.getElementById('inv-mark-view').style.display = 'block';
 
   var wrap = document.getElementById('inv-mark-imgwrap');
   wrap.innerHTML = '';
@@ -2252,7 +2242,7 @@ function invShowMeasureReview(canvas, count) {
   document.getElementById('inv-count-review-hint').textContent = 'Estimated from stack height ÷ single-copy height — this is an estimate. Adjust the number if it looks off, then confirm.';
   document.getElementById('inv-mark-view').style.display = 'none';
   var reviewView = document.getElementById('inv-count-review-view');
-  reviewView.style.display = 'flex';
+  reviewView.style.display = 'block';
   var wrap = document.getElementById('inv-count-review-imgwrap');
   wrap.innerHTML = '';
   wrap.appendChild(canvas);
