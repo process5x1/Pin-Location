@@ -673,7 +673,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #page-inventory .trolley-item-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--inv-text); }
 #page-inventory .trolley-cart {
   margin: 12px auto 0; max-width: 320px; border: 1.5px solid var(--inv-border); border-radius: 10px;
-  padding: 14px 14px 10px; background: var(--inv-bg);
+  padding: 14px 14px 10px; background: var(--inv-bg); overflow: hidden;
 }
 #page-inventory .trolley-sign {
   text-align: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 11px;
@@ -695,7 +695,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #page-inventory .trolley-shelf { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
 #page-inventory .trolley-slot {
   background: var(--inv-surface); border: 1.5px dashed var(--inv-border); border-radius: 8px;
-  padding: 6px; display: flex; flex-direction: column; gap: 4px;
+  padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 0;
 }
 #page-inventory .trolley-slot.filled { border-style: solid; }
 #page-inventory .trolley-slot-thumb { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 6px; border: 1px solid var(--inv-border); }
