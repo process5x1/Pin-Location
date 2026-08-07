@@ -522,6 +522,87 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #page-sorter .as-addr-full { font-size: 11px; color: var(--as-text-muted); }
 #page-sorter .as-card-btns { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
 #page-sorter .as-empty { text-align: center; color: var(--as-text-faint); font-size: 13px; padding: 2rem 1rem; line-height: 1.6; }
+
+/* ══════════════════════════════════════════════
+   INVENTORY PAGE
+══════════════════════════════════════════════ */
+#page-inventory { overflow-y: auto; }
+#page-inventory .inv-wrap {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  --inv-bg: #f9f8f6;
+  --inv-surface: #ffffff;
+  --inv-border: #e2e0d8;
+  --inv-border-strong: #c8c6bc;
+  --inv-text: #1a1a18;
+  --inv-text-muted: #6b6a64;
+  --inv-text-faint: #9b9a94;
+  --inv-accent: #1a1a18;
+  --inv-accent-text: #ffffff;
+  --inv-remove-bg: #fff5f5;
+  --inv-remove-border: #fca5a5;
+  --inv-remove-text: #b91c1c;
+  --inv-radius: 8px;
+  --inv-radius-lg: 12px;
+}
+#page-inventory .inv-header { margin-bottom: 1.5rem; }
+#page-inventory .inv-h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; color: var(--inv-text); }
+#page-inventory .inv-subtitle { font-size: 14px; color: var(--inv-text-muted); }
+#page-inventory .inv-tabs { display: flex; gap: 4px; border-bottom: 1.5px solid var(--inv-border); margin-bottom: 1.5rem; }
+#page-inventory .inv-tab {
+  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--inv-text-muted);
+  background: none; border: none; padding: 10px 14px; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1.5px; transition: color .15s, border-color .15s;
+}
+#page-inventory .inv-tab:hover { color: var(--inv-text); }
+#page-inventory .inv-tab.active { color: var(--inv-text); border-bottom-color: var(--inv-accent); }
+#page-inventory .inv-card {
+  background: var(--inv-surface); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius-lg);
+  padding: 1.25rem; margin-bottom: 1rem;
+}
+#page-inventory .inv-label { display: block; font-size: 12px; font-weight: 600; color: var(--inv-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0.9rem 0 6px; }
+#page-inventory .inv-label:first-child { margin-top: 0; }
+#page-inventory .inv-input {
+  width: 100%; font-family: inherit; font-size: 14px; color: var(--inv-text);
+  background: var(--inv-bg); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius);
+  padding: 9px 11px;
+}
+#page-inventory .inv-input:focus { outline: none; border-color: var(--inv-border-strong); }
+#page-inventory .inv-hint { font-size: 12px; color: var(--inv-text-faint); line-height: 1.5; margin-top: 4px; }
+#page-inventory .inv-pic-row { display: flex; align-items: center; gap: 12px; }
+#page-inventory .inv-pic-preview { width: 64px; height: 64px; object-fit: cover; border-radius: var(--inv-radius); border: 1.5px solid var(--inv-border); }
+#page-inventory .inv-btn-row { display: flex; align-items: center; gap: 10px; margin-top: 1.1rem; flex-wrap: wrap; }
+#page-inventory .inv-btn {
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius); background: var(--inv-surface);
+  color: var(--inv-text); padding: 8px 14px; transition: border-color .15s, background .15s;
+  -webkit-appearance: none;
+}
+#page-inventory .inv-btn:hover { border-color: var(--inv-border-strong); background: var(--inv-bg); }
+#page-inventory .inv-btn:active { transform: scale(0.98); }
+#page-inventory .inv-btn-primary { background: var(--inv-accent); color: var(--inv-accent-text); border-color: var(--inv-accent); }
+#page-inventory .inv-btn-primary:hover { opacity: 0.88; background: var(--inv-accent); }
+#page-inventory .inv-btn-remove { color: var(--inv-remove-text); border-color: var(--inv-remove-border); background: transparent; padding: 5px 10px; font-size: 12px; }
+#page-inventory .inv-btn-remove:hover { background: var(--inv-remove-bg); }
+#page-inventory .inv-save-msg { font-size: 12px; color: var(--as-add-text, #15803d); }
+#page-inventory .inv-list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+#page-inventory .inv-panel-count { font-size: 12px; color: var(--inv-text-faint); }
+#page-inventory .inv-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--inv-surface); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius-lg);
+  padding: 12px 14px; margin-bottom: 8px;
+}
+#page-inventory .inv-item-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: var(--inv-radius); border: 1.5px solid var(--inv-border); flex-shrink: 0; }
+#page-inventory .inv-item-thumb-empty {
+  width: 48px; height: 48px; border-radius: var(--inv-radius); border: 1.5px dashed var(--inv-border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--inv-text-faint);
+}
+#page-inventory .inv-item-info { flex: 1; min-width: 0; }
+#page-inventory .inv-item-title { font-size: 14px; font-weight: 600; color: var(--inv-text); margin-bottom: 2px; }
+#page-inventory .inv-item-meta { font-size: 12px; color: var(--inv-text-muted); }
+#page-inventory .inv-empty { text-align: center; color: var(--inv-text-faint); font-size: 13px; padding: 2rem 1rem; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -535,6 +616,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <button class="nav-link" data-page="pinner" onclick="showPage('pinner')">Map Pinner</button>
 
       <button class="nav-link" data-page="sorter" onclick="showPage('sorter')">List Sorter</button>
+      <button class="nav-link" data-page="inventory" onclick="showPage('inventory')">Inventory</button>
     </div>
   </nav>
   <div class="home-hero">
@@ -557,11 +639,11 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <div class="tool-card-cta">Coming Soon</div>
     </button>
 
-    <button class="tool-card" disabled>
+    <button class="tool-card" onclick="showPage('inventory')">
       <div class="tool-card-icon">📦</div>
       <div class="tool-card-title">Inventory</div>
-      <div class="tool-card-desc">Coming soon.</div>
-      <div class="tool-card-cta">Coming Soon</div>
+      <div class="tool-card-desc">Track publications on hand — add new items, browse your inventory, and import/export your data with photos.</div>
+      <div class="tool-card-cta">Open Inventory</div>
     </button>
   </div>
 </div>
@@ -576,6 +658,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <button class="nav-link active" data-page="pinner" onclick="showPage('pinner')">Map Pinner</button>
   
         <button class="nav-link" data-page="sorter" onclick="showPage('sorter')">List Sorter</button>
+        <button class="nav-link" data-page="inventory" onclick="showPage('inventory')">Inventory</button>
       </div>
     </nav>
     <div class="wrapper">
@@ -755,6 +838,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <button class="nav-link" data-page="pinner" onclick="showPage('pinner')">Map Pinner</button>
 
       <button class="nav-link active" data-page="sorter" onclick="showPage('sorter')">List Sorter</button>
+      <button class="nav-link" data-page="inventory" onclick="showPage('inventory')">Inventory</button>
     </div>
   </nav>
   <div class="as-wrap">
@@ -804,6 +888,85 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
             <button class="as-btn" style="font-size:13px;padding:6px 12px;" id="as-copy-names-btn">Copy with names</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INVENTORY PAGE ══ -->
+<div class="page" id="page-inventory">
+  <nav class="nav">
+    <span class="nav-logo" onclick="showPage('home')"><span class="logo-pin">📍</span> The Round</span>
+    <div class="nav-links">
+      <button class="nav-link" data-page="home" onclick="showPage('home')">Home</button>
+      <button class="nav-link" data-page="pinner" onclick="showPage('pinner')">Map Pinner</button>
+      <button class="nav-link" data-page="sorter" onclick="showPage('sorter')">List Sorter</button>
+      <button class="nav-link active" data-page="inventory" onclick="showPage('inventory')">Inventory</button>
+    </div>
+  </nav>
+
+  <div class="inv-wrap">
+    <div class="inv-header">
+      <h1 class="inv-h1">Inventory</h1>
+      <p class="inv-subtitle">Track publications on hand.</p>
+    </div>
+
+    <div class="inv-tabs">
+      <button class="inv-tab active" data-inv-tab="add" onclick="showInvTab('add')">Add Publication</button>
+      <button class="inv-tab" data-inv-tab="list" onclick="showInvTab('list')">Inventory</button>
+      <button class="inv-tab" data-inv-tab="io" onclick="showInvTab('io')">Import/Export</button>
+    </div>
+
+    <!-- Add Publication -->
+    <div class="inv-panel" id="inv-panel-add">
+      <div class="inv-card">
+        <label class="inv-label" for="inv-pic-input">Picture</label>
+        <div class="inv-pic-row">
+          <img class="inv-pic-preview" id="inv-pic-preview" style="display:none;">
+          <input type="file" id="inv-pic-input" accept="image/*" capture="environment">
+        </div>
+
+        <label class="inv-label" for="inv-title-input">Title</label>
+        <input type="text" class="inv-input" id="inv-title-input" placeholder="Publication title">
+
+        <label class="inv-label" for="inv-code-input">Code</label>
+        <input type="text" class="inv-input" id="inv-code-input" placeholder="Item code">
+
+        <label class="inv-label" for="inv-volume-input">Volume</label>
+        <input type="text" class="inv-input" id="inv-volume-input" placeholder="e.g. Vol. 12">
+
+        <label class="inv-label" for="inv-lastcounted-input">Last counted</label>
+        <input type="date" class="inv-input" id="inv-lastcounted-input">
+
+        <div class="inv-btn-row">
+          <button class="inv-btn inv-btn-primary" id="inv-add-btn" onclick="addInvEntry()">Add publication</button>
+          <span class="inv-save-msg" id="inv-save-msg"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory list -->
+    <div class="inv-panel" id="inv-panel-list" style="display:none;">
+      <div class="inv-list-head">
+        <span class="inv-panel-count" id="inv-count"></span>
+      </div>
+      <div id="inv-list"></div>
+    </div>
+
+    <!-- Import/Export -->
+    <div class="inv-panel" id="inv-panel-io" style="display:none;">
+      <div class="inv-card">
+        <div class="inv-label">Export</div>
+        <p class="inv-hint">Downloads a JSON file with all publications, including photos, so you can move your inventory to another device without retaking pictures.</p>
+        <div class="inv-btn-row">
+          <button class="inv-btn inv-btn-primary" onclick="exportInv()">Download export</button>
+        </div>
+      </div>
+      <div class="inv-card">
+        <div class="inv-label">Import</div>
+        <p class="inv-hint">Choose a previously exported JSON file to add its publications here.</p>
+        <input type="file" accept="application/json" id="inv-import-input" onchange="importInv(this.files[0])">
+        <span class="inv-save-msg" id="inv-import-msg"></span>
       </div>
     </div>
   </div>
@@ -1585,6 +1748,139 @@ function initPinnerMap() {
     document.getElementById('clearOrganisationBtn').addEventListener('click',function(){saveOrganisation([]);renderOrganisation();});
     renderOrganisation();
   })();
+}
+
+// ══════════════════════════════════════════════
+//  INVENTORY
+// ══════════════════════════════════════════════
+var INV_KEY = 'inv_publications_v1';
+var invPendingPic = null;
+
+function loadInv() { try { return JSON.parse(localStorage.getItem(INV_KEY) || '[]'); } catch (e) { return []; } }
+function saveInv(list) { try { localStorage.setItem(INV_KEY, JSON.stringify(list)); } catch (e) {} }
+
+function showInvTab(name) {
+  document.querySelectorAll('.inv-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.invTab === name); });
+  document.getElementById('inv-panel-add').style.display = name === 'add' ? '' : 'none';
+  document.getElementById('inv-panel-list').style.display = name === 'list' ? '' : 'none';
+  document.getElementById('inv-panel-io').style.display = name === 'io' ? '' : 'none';
+  if (name === 'list') renderInvList();
+}
+
+document.getElementById('inv-pic-input').addEventListener('change', function() {
+  var file = this.files[0];
+  if (!file) { invPendingPic = null; document.getElementById('inv-pic-preview').style.display = 'none'; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    invPendingPic = e.target.result;
+    var img = document.getElementById('inv-pic-preview');
+    img.src = invPendingPic;
+    img.style.display = '';
+  };
+  reader.readAsDataURL(file);
+});
+
+function addInvEntry() {
+  var title = document.getElementById('inv-title-input').value.trim();
+  var msg = document.getElementById('inv-save-msg');
+  if (!title) { msg.textContent = 'Title is required.'; msg.style.color = 'var(--inv-remove-text, #b91c1c)'; return; }
+  var entry = {
+    id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    picture: invPendingPic,
+    title: title,
+    code: document.getElementById('inv-code-input').value.trim(),
+    volume: document.getElementById('inv-volume-input').value.trim(),
+    lastCounted: document.getElementById('inv-lastcounted-input').value
+  };
+  var list = loadInv();
+  list.unshift(entry);
+  saveInv(list);
+
+  document.getElementById('inv-title-input').value = '';
+  document.getElementById('inv-code-input').value = '';
+  document.getElementById('inv-volume-input').value = '';
+  document.getElementById('inv-lastcounted-input').value = '';
+  document.getElementById('inv-pic-input').value = '';
+  document.getElementById('inv-pic-preview').style.display = 'none';
+  invPendingPic = null;
+
+  msg.style.color = '';
+  msg.textContent = 'Added "' + entry.title + '".';
+  setTimeout(function() { if (msg.textContent.indexOf(entry.title) !== -1) msg.textContent = ''; }, 3000);
+}
+
+function escInv(s) { return String(s || '').replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+function renderInvList() {
+  var list = loadInv();
+  var wrap = document.getElementById('inv-list');
+  document.getElementById('inv-count').textContent = list.length + (list.length === 1 ? ' publication' : ' publications');
+  if (!list.length) { wrap.innerHTML = '<div class="inv-empty">No publications yet. Add one from the <strong>Add Publication</strong> tab.</div>'; return; }
+  wrap.innerHTML = '';
+  list.forEach(function(entry) {
+    var div = document.createElement('div');
+    div.className = 'inv-item';
+    var thumb = entry.picture
+      ? '<img class="inv-item-thumb" src="' + entry.picture + '">'
+      : '<div class="inv-item-thumb-empty">📦</div>';
+    var meta = [];
+    if (entry.code) meta.push('Code: ' + escInv(entry.code));
+    if (entry.volume) meta.push('Vol: ' + escInv(entry.volume));
+    if (entry.lastCounted) meta.push('Last counted: ' + escInv(entry.lastCounted));
+    div.innerHTML = thumb +
+      '<div class="inv-item-info"><div class="inv-item-title">' + escInv(entry.title) + '</div>' +
+      '<div class="inv-item-meta">' + (meta.join(' · ') || '—') + '</div></div>' +
+      '<button class="inv-btn inv-btn-remove" data-id="' + entry.id + '">Delete</button>';
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('.inv-btn-remove').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var list = loadInv().filter(function(e) { return e.id !== btn.dataset.id; });
+      saveInv(list);
+      renderInvList();
+    });
+  });
+}
+
+function exportInv() {
+  var list = loadInv();
+  var blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'inventory-export-' + date + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importInv(file) {
+  var msg = document.getElementById('inv-import-msg');
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var imported;
+    try { imported = JSON.parse(e.target.result); } catch (err) { msg.style.color = 'var(--inv-remove-text, #b91c1c)'; msg.textContent = 'Invalid JSON file.'; return; }
+    if (!Array.isArray(imported)) { msg.style.color = 'var(--inv-remove-text, #b91c1c)'; msg.textContent = 'Invalid inventory file.'; return; }
+    var list = loadInv();
+    var existingIds = {};
+    list.forEach(function(e) { existingIds[e.id] = true; });
+    var added = 0;
+    imported.forEach(function(entry) {
+      if (!entry || !entry.title) return;
+      if (!entry.id || existingIds[entry.id]) entry.id = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      list.push(entry);
+      added++;
+    });
+    saveInv(list);
+    msg.style.color = '';
+    msg.textContent = 'Imported ' + added + ' publication' + (added === 1 ? '' : 's') + '.';
+    renderInvList();
+    document.getElementById('inv-import-input').value = '';
+  };
+  reader.readAsText(file);
 }
 
 // ══════════════════════════════════════════════
