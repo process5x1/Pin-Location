@@ -2188,11 +2188,16 @@ function invSortedHistory(entry) {
 }
 
 function invSparkline(sorted) {
-  if (sorted.length < 2) return '';
+  if (sorted.length === 0) return '';
+  var w = 140, hgt = 32;
+  if (sorted.length === 1) {
+    return '<svg class="inv-sparkline" viewBox="0 0 ' + w + ' ' + hgt + '" preserveAspectRatio="none">' +
+      '<circle cx="' + (w / 2) + '" cy="' + (hgt / 2) + '" r="3" fill="currentColor"/></svg>';
+  }
   var counts = sorted.map(function(r) { return r.count; });
   var max = Math.max.apply(null, counts), min = Math.min.apply(null, counts);
   var range = max - min || 1;
-  var w = 140, hgt = 32, pad = 3;
+  var pad = 3;
   var points = sorted.map(function(r, i) {
     var x = pad + (i / (sorted.length - 1)) * (w - pad * 2);
     var y = pad + (1 - (r.count - min) / range) * (hgt - pad * 2);
