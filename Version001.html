@@ -702,12 +702,19 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--inv-text-faint);
 }
 #page-inventory .trolley-slot-title { font-size: 10px; color: var(--inv-text); line-height: 1.3; word-break: break-word; }
+#page-inventory .trolley-slot-controls { display: flex; gap: 4px; }
 #page-inventory .trolley-slot-select {
+  flex: 2; min-width: 0;
   font-family: inherit; font-size: 10px; padding: 4px 18px 4px 5px; border-radius: 6px;
   border: 1.5px solid var(--inv-border); background-color: var(--inv-bg); color: var(--inv-text);
   -webkit-appearance: none; appearance: none; cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%236b6a64' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5.5 8 10 12.5 14.5 8'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 4px center; background-size: 10px;
+}
+#page-inventory .trolley-slot-qty {
+  flex: 1; min-width: 0;
+  font-family: inherit; font-size: 10px; padding: 4px 5px; border-radius: 6px;
+  border: 1.5px solid var(--inv-border); background: var(--inv-bg); color: var(--inv-text);
 }
 #page-inventory .trolley-wheels { display: flex; justify-content: space-between; padding: 0 22px; }
 #page-inventory .trolley-wheel { width: 16px; height: 16px; border-radius: 50%; background: var(--inv-border-strong); }
@@ -2365,11 +2372,22 @@ function addTrolley() {
 var INV_TROLLEY_SHELVES = 3;
 var INV_TROLLEY_SLOTS_PER_SHELF = 2;
 
+function invSlotPubId(slot) {
+  if (!slot) return null;
+  return typeof slot === 'string' ? slot : (slot.pubId || null);
+}
+function invSlotQty(slot) {
+  if (!slot || typeof slot === 'string') return '';
+  return slot.qty != null ? slot.qty : '';
+}
+
 function renderTrolleyShelf(trolley, pubs, shelfIdx) {
   var html = '<div class="trolley-shelf-label">Shelf ' + (shelfIdx + 1) + '</div><div class="trolley-shelf">';
   for (var i = 0; i < INV_TROLLEY_SLOTS_PER_SHELF; i++) {
     var slotIdx = shelfIdx * INV_TROLLEY_SLOTS_PER_SHELF + i;
-    var pubId = trolley.slots[slotIdx];
+    var slot = trolley.slots[slotIdx];
+    var pubId = invSlotPubId(slot);
+    var qty = invSlotQty(slot);
     var pub = pubId ? pubs.find(function(p) { return p.id === pubId; }) : null;
     html += '<div class="trolley-slot' + (pub ? ' filled' : '') + '">';
     if (pub) {
@@ -2378,11 +2396,14 @@ function renderTrolleyShelf(trolley, pubs, shelfIdx) {
     } else {
       html += '<div class="trolley-slot-thumb-empty">+</div>';
     }
+    html += '<div class="trolley-slot-controls">';
     html += '<select class="trolley-slot-select" data-slot-select="' + trolley.id + '|' + slotIdx + '"><option value="">Empty</option>';
     pubs.forEach(function(p) {
       html += '<option value="' + p.id + '"' + (p.id === pubId ? ' selected' : '') + '>' + escInv(p.title) + '</option>';
     });
-    html += '</select></div>';
+    html += '</select>';
+    html += '<input type="number" step="1" inputmode="numeric" class="trolley-slot-qty" placeholder="Qty" data-slot-qty="' + trolley.id + '|' + slotIdx + '" value="' + escInv(qty) + '">';
+    html += '</div></div>';
   }
   html += '</div>';
   return html;
@@ -2470,7 +2491,26 @@ function renderTrolleyList() {
       var trolleyId = parts[0], slotIdx = parseInt(parts[1], 10);
       var list = loadTrolleys();
       var t = list.find(function(x) { return x.id === trolleyId; });
-      if (t) { t.slots[slotIdx] = sel.value || null; saveTrolleys(list); }
+      if (t) {
+        var existingQty = invSlotQty(t.slots[slotIdx]);
+        t.slots[slotIdx] = sel.value ? { pubId: sel.value, qty: existingQty } : null;
+        saveTrolleys(list);
+      }
+      renderTrolleyList();
+    });
+  });
+  wrap.querySelectorAll('[data-slot-qty]').forEach(function(inp) {
+    inp.addEventListener('change', function() {
+      var parts = inp.dataset.slotQty.split('|');
+      var trolleyId = parts[0], slotIdx = parseInt(parts[1], 10);
+      var list = loadTrolleys();
+      var t = list.find(function(x) { return x.id === trolleyId; });
+      if (t) {
+        var pubId = invSlotPubId(t.slots[slotIdx]);
+        var qtyVal = inp.value.trim();
+        t.slots[slotIdx] = (pubId || qtyVal) ? { pubId: pubId, qty: qtyVal } : null;
+        saveTrolleys(list);
+      }
       renderTrolleyList();
     });
   });
