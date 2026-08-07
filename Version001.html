@@ -620,6 +620,10 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   background: var(--inv-surface); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius-lg);
   padding: 12px;
 }
+#page-inventory .inv-item[data-card-toggle] { cursor: pointer; }
+#page-inventory .inv-item[data-card-toggle]:hover { border-color: var(--inv-border-strong); }
+#page-inventory .inv-item[data-card-toggle] .inv-btn-row,
+#page-inventory .inv-item[data-card-toggle] .inv-history { cursor: default; }
 #page-inventory .inv-item-thumb { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--inv-radius); border: 1.5px solid var(--inv-border); }
 #page-inventory .inv-item-thumb-empty {
   width: 100%; aspect-ratio: 1; border-radius: var(--inv-radius); border: 1.5px dashed var(--inv-border);
@@ -2177,7 +2181,7 @@ function escInv(s) { return String(s || '').replace(/[&<>"']/g, function(c) { re
 
 var INV_CATEGORIES = ['Brochure', 'Magazines', 'Book', 'Tracts', 'Contact Cards'];
 var invEditingId = null;
-var invHistoryOpenId = null;
+var invExpandedIds = {};
 
 function invSortedHistory(entry) {
   return (entry.history || []).slice().sort(function(a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
@@ -2226,26 +2230,29 @@ function renderInvItem(entry) {
     return div;
   }
 
-  var sorted = invSortedHistory(entry);
   var meta = [];
   if (entry.code) meta.push('Code: ' + escInv(entry.code));
   if (entry.volume !== '' && entry.volume != null) meta.push('Vol: ' + escInv(entry.volume));
   if (entry.count !== '' && entry.count != null) meta.push('Count: ' + escInv(entry.count));
   if (entry.lastCounted) meta.push('Last counted: ' + escInv(entry.lastCounted));
 
+  var expanded = !!invExpandedIds[entry.id];
   var historyBlock = '';
-  if (entry.id === invHistoryOpenId) {
+  var btnRow = '';
+  if (expanded) {
+    var sorted = invSortedHistory(entry);
     historyBlock = '<div class="inv-history">' + invSparkline(sorted) + '<div class="inv-history-rows">' + invHistoryRows(sorted) + '</div></div>';
+    btnRow = '<div class="inv-btn-row">' +
+      '<button class="inv-btn" data-amend-start="' + entry.id + '">Amend</button>' +
+      '<button class="inv-btn inv-btn-remove" data-id="' + entry.id + '">Delete</button></div>';
   }
 
+  div.dataset.cardToggle = entry.id;
   div.innerHTML = thumb +
     '<div class="inv-item-info"><div class="inv-item-title">' + escInv(entry.title) + '</div>' +
     '<div class="inv-item-meta">' + (meta.join(' · ') || '—') + '</div>' +
     historyBlock + '</div>' +
-    '<div class="inv-btn-row">' +
-    '<button class="inv-btn" data-amend-start="' + entry.id + '">Amend</button>' +
-    '<button class="inv-btn" data-history-toggle="' + entry.id + '">' + (entry.id === invHistoryOpenId ? 'Hide records' : 'Records') + '</button>' +
-    '<button class="inv-btn inv-btn-remove" data-id="' + entry.id + '">Delete</button></div>';
+    btnRow;
   return div;
 }
 
@@ -2276,6 +2283,14 @@ function renderInvList() {
     wrap.appendChild(grid);
   });
 
+  wrap.querySelectorAll('[data-card-toggle]').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+      if (e.target.closest('.inv-btn-row')) return;
+      var id = card.dataset.cardToggle;
+      invExpandedIds[id] = !invExpandedIds[id];
+      renderInvList();
+    });
+  });
   wrap.querySelectorAll('[data-id]').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var list = loadInv().filter(function(e) { return e.id !== btn.dataset.id; });
@@ -2291,13 +2306,6 @@ function renderInvList() {
   });
   wrap.querySelectorAll('[data-amend-cancel]').forEach(function(btn) {
     btn.addEventListener('click', function() { invEditingId = null; renderInvList(); });
-  });
-  wrap.querySelectorAll('[data-history-toggle]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var id = btn.dataset.historyToggle;
-      invHistoryOpenId = invHistoryOpenId === id ? null : id;
-      renderInvList();
-    });
   });
   wrap.querySelectorAll('[data-amend-save]').forEach(function(btn) {
     btn.addEventListener('click', function() {
@@ -2321,7 +2329,7 @@ function renderInvList() {
         saveInv(list);
       }
       invEditingId = null;
-      invHistoryOpenId = id;
+      invExpandedIds[id] = true;
       renderInvList();
     });
   });
