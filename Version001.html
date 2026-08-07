@@ -661,6 +661,47 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 .inv-camera-controls { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; }
 .inv-camera-error { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ff8a7a; max-width: 320px; margin: 10px auto 0; }
 .inv-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+
+/* ── Trolley Arrangement ── */
+#page-inventory .trolley-item {
+  background: var(--inv-surface); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius-lg);
+  padding: 12px; margin-bottom: 10px;
+}
+#page-inventory .trolley-item-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+#page-inventory .trolley-item-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--inv-text); }
+#page-inventory .trolley-cart {
+  margin-top: 12px; border: 1.5px solid var(--inv-border); border-radius: 10px;
+  padding: 14px 14px 10px; background: var(--inv-bg);
+}
+#page-inventory .trolley-sign {
+  text-align: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--inv-text-muted);
+  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1.5px dashed var(--inv-border);
+}
+#page-inventory .trolley-shelf-label {
+  font-size: 10px; color: var(--inv-text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px;
+}
+#page-inventory .trolley-shelf { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+#page-inventory .trolley-slot {
+  background: var(--inv-surface); border: 1.5px dashed var(--inv-border); border-radius: 8px;
+  padding: 6px; display: flex; flex-direction: column; gap: 4px;
+}
+#page-inventory .trolley-slot.filled { border-style: solid; }
+#page-inventory .trolley-slot-thumb { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 6px; border: 1px solid var(--inv-border); }
+#page-inventory .trolley-slot-thumb-empty {
+  width: 100%; aspect-ratio: 3/4; border-radius: 6px; border: 1px dashed var(--inv-border);
+  display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--inv-text-faint);
+}
+#page-inventory .trolley-slot-title { font-size: 10px; color: var(--inv-text); line-height: 1.3; word-break: break-word; }
+#page-inventory .trolley-slot-select {
+  font-family: inherit; font-size: 10px; padding: 4px 18px 4px 5px; border-radius: 6px;
+  border: 1.5px solid var(--inv-border); background-color: var(--inv-bg); color: var(--inv-text);
+  -webkit-appearance: none; appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%236b6a64' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5.5 8 10 12.5 14.5 8'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 4px center; background-size: 10px;
+}
+#page-inventory .trolley-wheels { display: flex; justify-content: space-between; padding: 0 22px; }
+#page-inventory .trolley-wheel { width: 16px; height: 16px; border-radius: 50%; background: var(--inv-border-strong); }
 </style>
 </head>
 <body>
@@ -989,10 +1030,10 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <div class="inv-box-desc">Move your inventory to another device, photos included.</div>
       </button>
 
-      <button class="inv-box" disabled>
+      <button class="inv-box" onclick="showInvSection('trolley')">
         <div class="inv-box-icon">🛒</div>
         <div class="inv-box-title">Trolley Arrangement</div>
-        <div class="inv-box-desc">Coming soon.</div>
+        <div class="inv-box-desc">Plan what goes on each shelf of your literature cart.</div>
       </button>
     </div>
 
@@ -1076,6 +1117,20 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         </div>
         <span class="inv-save-msg" id="inv-import-msg"></span>
       </div>
+    </div>
+
+    <!-- Trolley Arrangement -->
+    <div class="inv-panel" id="inv-panel-trolley" style="display:none;">
+      <button class="inv-back" onclick="showInvSection('home')">&larr; Back</button>
+      <div class="inv-card">
+        <label class="inv-label" for="inv-trolley-name-input">Add Trolley</label>
+        <input type="text" class="inv-input" id="inv-trolley-name-input" placeholder="e.g. Main Street Cart">
+        <div class="inv-btn-row">
+          <button class="inv-btn inv-btn-primary" onclick="addTrolley()">Add trolley</button>
+          <span class="inv-save-msg" id="inv-trolley-save-msg"></span>
+        </div>
+      </div>
+      <div id="inv-trolley-list"></div>
     </div>
   </div>
 </div>
@@ -1895,7 +1950,9 @@ function showInvSection(name) {
   document.getElementById('inv-panel-add').style.display = name === 'add' ? '' : 'none';
   document.getElementById('inv-panel-list').style.display = name === 'list' ? '' : 'none';
   document.getElementById('inv-panel-io').style.display = name === 'io' ? '' : 'none';
+  document.getElementById('inv-panel-trolley').style.display = name === 'trolley' ? '' : 'none';
   if (name === 'list') renderInvList();
+  if (name === 'trolley') renderTrolleyList();
 }
 
 function invBindPicInput(inputId, previewId, nameId, setPending) {
@@ -2261,6 +2318,99 @@ function renderInvList() {
       invEditingId = null;
       invExpandedIds[id] = true;
       renderInvList();
+    });
+  });
+}
+
+// ── Trolley Arrangement ──
+var INV_TROLLEY_KEY = 'inv_trolleys_v1';
+var invTrolleyOpenId = null;
+
+function loadTrolleys() { try { return JSON.parse(localStorage.getItem(INV_TROLLEY_KEY) || '[]'); } catch (e) { return []; } }
+function saveTrolleys(list) { try { localStorage.setItem(INV_TROLLEY_KEY, JSON.stringify(list)); } catch (e) {} }
+
+function addTrolley() {
+  var nameInput = document.getElementById('inv-trolley-name-input');
+  var name = nameInput.value.trim();
+  var msg = document.getElementById('inv-trolley-save-msg');
+  if (!name) { msg.style.color = 'var(--inv-remove-text, #b91c1c)'; msg.textContent = 'Name is required.'; return; }
+  var trolleys = loadTrolleys();
+  trolleys.unshift({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 8), name: name, slots: new Array(8).fill(null) });
+  saveTrolleys(trolleys);
+  nameInput.value = '';
+  msg.style.color = '';
+  msg.textContent = 'Added "' + name + '".';
+  setTimeout(function() { if (msg.textContent.indexOf(name) !== -1) msg.textContent = ''; }, 3000);
+  renderTrolleyList();
+}
+
+function renderTrolleyShelf(trolley, pubs, shelfIdx) {
+  var html = '<div class="trolley-shelf-label">Shelf ' + (shelfIdx + 1) + '</div><div class="trolley-shelf">';
+  for (var i = 0; i < 4; i++) {
+    var slotIdx = shelfIdx * 4 + i;
+    var pubId = trolley.slots[slotIdx];
+    var pub = pubId ? pubs.find(function(p) { return p.id === pubId; }) : null;
+    html += '<div class="trolley-slot' + (pub ? ' filled' : '') + '">';
+    if (pub) {
+      html += pub.pictureFront ? '<img class="trolley-slot-thumb" src="' + pub.pictureFront + '">' : '<div class="trolley-slot-thumb-empty">📦</div>';
+      html += '<div class="trolley-slot-title">' + escInv(pub.title) + '</div>';
+    } else {
+      html += '<div class="trolley-slot-thumb-empty">+</div>';
+    }
+    html += '<select class="trolley-slot-select" data-slot-select="' + trolley.id + '|' + slotIdx + '"><option value="">Empty</option>';
+    pubs.forEach(function(p) {
+      html += '<option value="' + p.id + '"' + (p.id === pubId ? ' selected' : '') + '>' + escInv(p.title) + '</option>';
+    });
+    html += '</select></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderTrolleyList() {
+  var wrap = document.getElementById('inv-trolley-list');
+  var trolleys = loadTrolleys();
+  if (!trolleys.length) { wrap.innerHTML = '<div class="inv-empty">No trolleys yet. Add one above.</div>'; return; }
+  var pubs = loadInv();
+  wrap.innerHTML = '';
+  trolleys.forEach(function(trolley) {
+    var div = document.createElement('div');
+    div.className = 'trolley-item';
+    var open = trolley.id === invTrolleyOpenId;
+    var html = '<div class="trolley-item-head"><span class="trolley-item-title">' + escInv(trolley.name) + '</span>' +
+      '<div class="inv-btn-row" style="margin-top:0;"><button class="inv-btn" data-trolley-toggle="' + trolley.id + '">' + (open ? 'Hide' : 'Open') + '</button>' +
+      '<button class="inv-btn inv-btn-remove" data-trolley-delete="' + trolley.id + '">Delete</button></div></div>';
+    if (open) {
+      html += '<div class="trolley-cart"><div class="trolley-sign">' + escInv(trolley.name) + '</div>' +
+        renderTrolleyShelf(trolley, pubs, 0) + renderTrolleyShelf(trolley, pubs, 1) +
+        '<div class="trolley-wheels"><div class="trolley-wheel"></div><div class="trolley-wheel"></div></div></div>';
+    }
+    div.innerHTML = html;
+    wrap.appendChild(div);
+  });
+
+  wrap.querySelectorAll('[data-trolley-toggle]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = btn.dataset.trolleyToggle;
+      invTrolleyOpenId = invTrolleyOpenId === id ? null : id;
+      renderTrolleyList();
+    });
+  });
+  wrap.querySelectorAll('[data-trolley-delete]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var list = loadTrolleys().filter(function(t) { return t.id !== btn.dataset.trolleyDelete; });
+      saveTrolleys(list);
+      renderTrolleyList();
+    });
+  });
+  wrap.querySelectorAll('[data-slot-select]').forEach(function(sel) {
+    sel.addEventListener('change', function() {
+      var parts = sel.dataset.slotSelect.split('|');
+      var trolleyId = parts[0], slotIdx = parseInt(parts[1], 10);
+      var list = loadTrolleys();
+      var t = list.find(function(x) { return x.id === trolleyId; });
+      if (t) { t.slots[slotIdx] = sel.value || null; saveTrolleys(list); }
+      renderTrolleyList();
     });
   });
 }
