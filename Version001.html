@@ -681,7 +681,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #page-inventory .trolley-shelf-label {
   font-size: 10px; color: var(--inv-text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px;
 }
-#page-inventory .trolley-shelf { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+#page-inventory .trolley-shelf { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
 #page-inventory .trolley-slot {
   background: var(--inv-surface); border: 1.5px dashed var(--inv-border); border-radius: 8px;
   padding: 6px; display: flex; flex-direction: column; gap: 4px;
@@ -2335,7 +2335,7 @@ function addTrolley() {
   var msg = document.getElementById('inv-trolley-save-msg');
   if (!name) { msg.style.color = 'var(--inv-remove-text, #b91c1c)'; msg.textContent = 'Name is required.'; return; }
   var trolleys = loadTrolleys();
-  trolleys.unshift({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 8), name: name, slots: new Array(8).fill(null) });
+  trolleys.unshift({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 8), name: name, slots: new Array(INV_TROLLEY_SHELVES * INV_TROLLEY_SLOTS_PER_SHELF).fill(null) });
   saveTrolleys(trolleys);
   nameInput.value = '';
   msg.style.color = '';
@@ -2344,10 +2344,13 @@ function addTrolley() {
   renderTrolleyList();
 }
 
+var INV_TROLLEY_SHELVES = 3;
+var INV_TROLLEY_SLOTS_PER_SHELF = 2;
+
 function renderTrolleyShelf(trolley, pubs, shelfIdx) {
   var html = '<div class="trolley-shelf-label">Shelf ' + (shelfIdx + 1) + '</div><div class="trolley-shelf">';
-  for (var i = 0; i < 4; i++) {
-    var slotIdx = shelfIdx * 4 + i;
+  for (var i = 0; i < INV_TROLLEY_SLOTS_PER_SHELF; i++) {
+    var slotIdx = shelfIdx * INV_TROLLEY_SLOTS_PER_SHELF + i;
     var pubId = trolley.slots[slotIdx];
     var pub = pubId ? pubs.find(function(p) { return p.id === pubId; }) : null;
     html += '<div class="trolley-slot' + (pub ? ' filled' : '') + '">';
@@ -2381,8 +2384,10 @@ function renderTrolleyList() {
       '<div class="inv-btn-row" style="margin-top:0;"><button class="inv-btn" data-trolley-toggle="' + trolley.id + '">' + (open ? 'Hide' : 'Open') + '</button>' +
       '<button class="inv-btn inv-btn-remove" data-trolley-delete="' + trolley.id + '">Delete</button></div></div>';
     if (open) {
+      var shelvesHtml = '';
+      for (var s = 0; s < INV_TROLLEY_SHELVES; s++) shelvesHtml += renderTrolleyShelf(trolley, pubs, s);
       html += '<div class="trolley-cart"><div class="trolley-sign">' + escInv(trolley.name) + '</div>' +
-        renderTrolleyShelf(trolley, pubs, 0) + renderTrolleyShelf(trolley, pubs, 1) +
+        shelvesHtml +
         '<div class="trolley-wheels"><div class="trolley-wheel"></div><div class="trolley-wheel"></div></div></div>';
     }
     div.innerHTML = html;
