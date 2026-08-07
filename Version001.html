@@ -712,9 +712,9 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--inv-text-faint);
 }
 #page-inventory .trolley-slot-title { font-size: 10px; color: var(--inv-text); line-height: 1.3; word-break: break-word; }
-#page-inventory .trolley-slot-controls { display: flex; gap: 4px; }
+#page-inventory .trolley-slot-controls { display: flex; flex-direction: column; gap: 4px; }
 #page-inventory .trolley-slot-select {
-  flex: 2; min-width: 0;
+  width: 100%; min-width: 0;
   font-family: inherit; font-size: 10px; padding: 4px 18px 4px 5px; border-radius: 6px;
   border: 1.5px solid var(--inv-border); background-color: var(--inv-bg); color: var(--inv-text);
   -webkit-appearance: none; appearance: none; cursor: pointer;
@@ -722,9 +722,14 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   background-repeat: no-repeat; background-position: right 4px center; background-size: 10px;
 }
 #page-inventory .trolley-slot-qty {
-  flex: 1; min-width: 0;
-  font-family: inherit; font-size: 10px; padding: 4px 5px; border-radius: 6px;
+  width: 100%; min-width: 0; box-sizing: border-box;
+  font-family: inherit; font-size: 11px; padding: 4px 5px; border-radius: 6px;
   border: 1.5px solid var(--inv-border); background: var(--inv-bg); color: var(--inv-text);
+  -moz-appearance: textfield;
+}
+#page-inventory .trolley-slot-qty::-webkit-outer-spin-button,
+#page-inventory .trolley-slot-qty::-webkit-inner-spin-button {
+  -webkit-appearance: none; margin: 0;
 }
 #page-inventory .trolley-wheels { display: flex; justify-content: space-between; padding: 0 22px; }
 #page-inventory .trolley-wheel { width: 16px; height: 16px; border-radius: 50%; background: var(--inv-border-strong); }
