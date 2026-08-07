@@ -692,6 +692,14 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   width: 100%; aspect-ratio: 3 / 4; border-radius: 8px; border: 1.5px dashed var(--inv-border);
   display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--inv-text-faint);
 }
+#page-inventory .trolley-poster-select {
+  width: 100%; margin-top: 8px;
+  font-family: inherit; font-size: 12px; padding: 6px 22px 6px 8px; border-radius: 6px;
+  border: 1.5px solid var(--inv-border); background-color: var(--inv-bg); color: var(--inv-text);
+  -webkit-appearance: none; appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%236b6a64' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5.5 8 10 12.5 14.5 8'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center; background-size: 12px;
+}
 #page-inventory .trolley-shelf { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
 #page-inventory .trolley-slot {
   background: var(--inv-surface); border: 1.5px dashed var(--inv-border); border-radius: 8px;
@@ -1096,6 +1104,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           <option value="Book">Book</option>
           <option value="Tracts">Tracts</option>
           <option value="Contact Cards">Contact Cards</option>
+          <option value="Poster">Poster</option>
         </select>
 
         <div class="inv-btn-row">
@@ -2058,15 +2067,6 @@ function invCaptureFromCamera() {
   var entryId = parts[1];
   var previewId, nameId;
 
-  if (kind === 'trolley-poster') {
-    var trolleys = loadTrolleys();
-    var trolley = trolleys.find(function(t) { return t.id === entryId; });
-    if (trolley) { trolley.poster = dataUrl; saveTrolleys(trolleys); }
-    invCloseCamera();
-    renderTrolleyList();
-    return;
-  }
-
   if (kind === 'front' || kind === 'back') {
     previewId = kind === 'front' ? 'inv-pic-front-preview' : 'inv-pic-back-preview';
     nameId = kind === 'front' ? 'inv-pic-front-name' : 'inv-pic-back-name';
@@ -2129,7 +2129,7 @@ function addInvEntry() {
 
 function escInv(s) { return String(s || '').replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
-var INV_CATEGORIES = ['Brochure', 'Magazines', 'Book', 'Tracts', 'Contact Cards'];
+var INV_CATEGORIES = ['Brochure', 'Magazines', 'Book', 'Tracts', 'Contact Cards', 'Poster'];
 var invEditingId = null;
 var invExpandedIds = {};
 var invAmendPendingPicFront = null;
@@ -2428,16 +2428,23 @@ function renderTrolleyList() {
       var shelvesHtml = '';
       for (var s = 0; s < INV_TROLLEY_SHELVES; s++) shelvesHtml += renderTrolleyShelf(trolley, pubs, s);
 
+      var posterPubs = pubs.filter(function(p) { return p.category === 'Poster'; });
+      var posterPub = trolley.posterPubId ? pubs.find(function(p) { return p.id === trolley.posterPubId; }) : null;
+
       var posterHtml = '<div class="trolley-poster-board">' +
-        (trolley.poster
-          ? '<img class="trolley-poster-img" src="' + trolley.poster + '">'
-          : '<div class="trolley-poster-empty">No poster yet</div>') +
-        '<div class="inv-btn-row" style="margin-top:8px;">' +
-        '<button class="inv-btn inv-btn-primary" data-trolley-poster-photo="' + trolley.id + '">Take Photo</button>' +
-        '<input type="file" class="inv-file-input" accept="image/*" id="inv-trolley-poster-input-' + trolley.id + '" data-trolley-poster-input="' + trolley.id + '">' +
-        '<label class="inv-btn" for="inv-trolley-poster-input-' + trolley.id + '">Choose File</label>' +
-        (trolley.poster ? '<button class="inv-btn inv-btn-remove" data-trolley-poster-clear="' + trolley.id + '">Remove</button>' : '') +
-        '</div></div>';
+        (posterPub && posterPub.pictureFront
+          ? '<img class="trolley-poster-img" src="' + posterPub.pictureFront + '">'
+          : '<div class="trolley-poster-empty">' + (posterPub ? 'No photo for this poster' : 'No poster selected') + '</div>');
+      if (posterPubs.length) {
+        posterHtml += '<select class="trolley-poster-select" data-trolley-poster-select="' + trolley.id + '"><option value="">No poster</option>';
+        posterPubs.forEach(function(p) {
+          posterHtml += '<option value="' + p.id + '"' + (p.id === trolley.posterPubId ? ' selected' : '') + '>' + escInv(p.title) + '</option>';
+        });
+        posterHtml += '</select>';
+      } else {
+        posterHtml += '<p class="inv-hint">Add a publication with Category "Poster" to pick one here.</p>';
+      }
+      posterHtml += '</div>';
 
       html += '<div class="trolley-cart"><div class="trolley-sign">' + escInv(trolley.name) + '</div>' +
         posterHtml + shelvesHtml +
@@ -2461,29 +2468,12 @@ function renderTrolleyList() {
       renderTrolleyList();
     });
   });
-  wrap.querySelectorAll('[data-trolley-poster-photo]').forEach(function(btn) {
-    btn.addEventListener('click', function() { invOpenCamera('trolley-poster|' + btn.dataset.trolleyPosterPhoto); });
-  });
-  wrap.querySelectorAll('[data-trolley-poster-input]').forEach(function(input) {
-    input.addEventListener('change', function() {
-      var trolleyId = input.dataset.trolleyPosterInput;
-      var file = this.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function(e) {
-        var list = loadTrolleys();
-        var t = list.find(function(x) { return x.id === trolleyId; });
-        if (t) { t.poster = e.target.result; saveTrolleys(list); }
-        renderTrolleyList();
-      };
-      reader.readAsDataURL(file);
-    });
-  });
-  wrap.querySelectorAll('[data-trolley-poster-clear]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
+  wrap.querySelectorAll('[data-trolley-poster-select]').forEach(function(sel) {
+    sel.addEventListener('change', function() {
+      var trolleyId = sel.dataset.trolleyPosterSelect;
       var list = loadTrolleys();
-      var t = list.find(function(x) { return x.id === btn.dataset.trolleyPosterClear; });
-      if (t) { t.poster = null; saveTrolleys(list); }
+      var t = list.find(function(x) { return x.id === trolleyId; });
+      if (t) { t.posterPubId = sel.value || null; saveTrolleys(list); }
       renderTrolleyList();
     });
   });
