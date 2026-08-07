@@ -663,9 +663,12 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 .inv-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 
 /* ── Trolley Arrangement ── */
+#page-inventory #inv-trolley-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-items: start; }
+@media (max-width: 680px) { #page-inventory #inv-trolley-list { grid-template-columns: 1fr; } }
+#page-inventory #inv-trolley-list .inv-empty { grid-column: 1 / -1; }
 #page-inventory .trolley-item {
   background: var(--inv-surface); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius-lg);
-  padding: 12px; margin-bottom: 10px;
+  padding: 12px;
 }
 #page-inventory .trolley-item-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 #page-inventory .trolley-item-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--inv-text); }
