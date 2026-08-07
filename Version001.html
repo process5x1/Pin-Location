@@ -1972,14 +1972,26 @@ function invCaptureFromCamera() {
   canvas.getContext('2d').drawImage(video, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
   var dataUrl = canvas.toDataURL('image/jpeg', 0.88);
 
-  var target = invCameraTarget;
-  var previewId = target === 'front' ? 'inv-pic-front-preview' : 'inv-pic-back-preview';
-  var nameId = target === 'front' ? 'inv-pic-front-name' : 'inv-pic-back-name';
+  var parts = invCameraTarget.split('|');
+  var kind = parts[0];
+  var entryId = parts[1];
+  var previewId, nameId;
+
+  if (kind === 'front' || kind === 'back') {
+    previewId = kind === 'front' ? 'inv-pic-front-preview' : 'inv-pic-back-preview';
+    nameId = kind === 'front' ? 'inv-pic-front-name' : 'inv-pic-back-name';
+    if (kind === 'front') { invPendingPicFront = dataUrl; } else { invPendingPicBack = dataUrl; }
+  } else {
+    var side = kind === 'amend-front' ? 'front' : 'back';
+    previewId = 'inv-amend-pic-' + side + '-preview-' + entryId;
+    nameId = 'inv-amend-pic-' + side + '-name-' + entryId;
+    if (side === 'front') { invAmendPendingPicFront = dataUrl; } else { invAmendPendingPicBack = dataUrl; }
+  }
+
   var img = document.getElementById(previewId);
-  img.src = dataUrl;
-  img.style.display = '';
-  document.getElementById(nameId).textContent = 'Captured photo';
-  if (target === 'front') { invPendingPicFront = dataUrl; } else { invPendingPicBack = dataUrl; }
+  if (img) { img.src = dataUrl; img.style.display = ''; }
+  var nameEl = document.getElementById(nameId);
+  if (nameEl) nameEl.textContent = 'Captured photo';
 
   invCloseCamera();
 }
@@ -2030,6 +2042,8 @@ function escInv(s) { return String(s || '').replace(/[&<>"']/g, function(c) { re
 var INV_CATEGORIES = ['Brochure', 'Magazines', 'Book', 'Tracts', 'Contact Cards'];
 var invEditingId = null;
 var invExpandedIds = {};
+var invAmendPendingPicFront = null;
+var invAmendPendingPicBack = null;
 
 function invSortedHistory(entry) {
   return (entry.history || []).slice().sort(function(a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
@@ -2071,8 +2085,29 @@ function renderInvItem(entry) {
 
   if (entry.id === invEditingId) {
     var todayStr = new Date().toISOString().slice(0, 10);
+    var frontSrc = invAmendPendingPicFront || entry.pictureFront || '';
+    var backSrc = invAmendPendingPicBack || entry.pictureBack || '';
     div.innerHTML = thumb +
       '<div class="inv-item-info"><div class="inv-item-title">' + escInv(entry.title) + '</div>' +
+
+      '<label class="inv-label">Front Cover</label>' +
+      '<div class="inv-pic-row">' +
+      '<img class="inv-pic-preview" id="inv-amend-pic-front-preview-' + entry.id + '" src="' + frontSrc + '" style="' + (frontSrc ? '' : 'display:none;') + '">' +
+      '<button type="button" class="inv-btn inv-btn-primary" data-amend-take-photo="amend-front|' + entry.id + '">Take Photo</button>' +
+      '<input type="file" class="inv-file-input" id="inv-amend-pic-front-input-' + entry.id + '" accept="image/*" data-amend-pic-input="front|' + entry.id + '">' +
+      '<label class="inv-btn" for="inv-amend-pic-front-input-' + entry.id + '">Choose File</label>' +
+      '<span class="inv-file-name" id="inv-amend-pic-front-name-' + entry.id + '"></span>' +
+      '</div>' +
+
+      '<label class="inv-label">Back Cover</label>' +
+      '<div class="inv-pic-row">' +
+      '<img class="inv-pic-preview" id="inv-amend-pic-back-preview-' + entry.id + '" src="' + backSrc + '" style="' + (backSrc ? '' : 'display:none;') + '">' +
+      '<button type="button" class="inv-btn inv-btn-primary" data-amend-take-photo="amend-back|' + entry.id + '">Take Photo</button>' +
+      '<input type="file" class="inv-file-input" id="inv-amend-pic-back-input-' + entry.id + '" accept="image/*" data-amend-pic-input="back|' + entry.id + '">' +
+      '<label class="inv-btn" for="inv-amend-pic-back-input-' + entry.id + '">Choose File</label>' +
+      '<span class="inv-file-name" id="inv-amend-pic-back-name-' + entry.id + '"></span>' +
+      '</div>' +
+
       '<label class="inv-label">New count date</label>' +
       '<input type="date" class="inv-input" id="inv-amend-date-' + entry.id + '" value="' + escInv(entry.lastCounted || todayStr) + '">' +
       '<label class="inv-label">Count</label>' +
@@ -2151,10 +2186,46 @@ function renderInvList() {
     });
   });
   wrap.querySelectorAll('[data-amend-start]').forEach(function(btn) {
-    btn.addEventListener('click', function() { invEditingId = btn.dataset.amendStart; renderInvList(); });
+    btn.addEventListener('click', function() {
+      invAmendPendingPicFront = null;
+      invAmendPendingPicBack = null;
+      invEditingId = btn.dataset.amendStart;
+      renderInvList();
+    });
   });
   wrap.querySelectorAll('[data-amend-cancel]').forEach(function(btn) {
-    btn.addEventListener('click', function() { invEditingId = null; renderInvList(); });
+    btn.addEventListener('click', function() {
+      invAmendPendingPicFront = null;
+      invAmendPendingPicBack = null;
+      invEditingId = null;
+      renderInvList();
+    });
+  });
+  wrap.querySelectorAll('[data-amend-take-photo]').forEach(function(btn) {
+    btn.addEventListener('click', function() { invOpenCamera(btn.dataset.amendTakePhoto); });
+  });
+  wrap.querySelectorAll('[data-amend-pic-input]').forEach(function(input) {
+    input.addEventListener('change', function() {
+      var parts = input.dataset.amendPicInput.split('|');
+      var side = parts[0], id = parts[1];
+      var file = this.files[0];
+      var previewId = 'inv-amend-pic-' + side + '-preview-' + id;
+      var nameId = 'inv-amend-pic-' + side + '-name-' + id;
+      document.getElementById(nameId).textContent = file ? file.name : '';
+      if (!file) {
+        if (side === 'front') { invAmendPendingPicFront = null; } else { invAmendPendingPicBack = null; }
+        document.getElementById(previewId).style.display = 'none';
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        if (side === 'front') { invAmendPendingPicFront = e.target.result; } else { invAmendPendingPicBack = e.target.result; }
+        var img = document.getElementById(previewId);
+        img.src = e.target.result;
+        img.style.display = '';
+      };
+      reader.readAsDataURL(file);
+    });
   });
   wrap.querySelectorAll('[data-amend-save]').forEach(function(btn) {
     btn.addEventListener('click', function() {
@@ -2168,6 +2239,8 @@ function renderInvList() {
       var list = loadInv();
       var entry = list.find(function(e) { return e.id === id; });
       if (entry) {
+        if (invAmendPendingPicFront) entry.pictureFront = invAmendPendingPicFront;
+        if (invAmendPendingPicBack) entry.pictureBack = invAmendPendingPicBack;
         entry.history = entry.history || [];
         var existing = entry.history.find(function(r) { return r.date === dateVal; });
         if (existing) { existing.count = count; } else { entry.history.push({ date: dateVal, count: count }); }
@@ -2177,6 +2250,8 @@ function renderInvList() {
         entry.count = latest.count;
         saveInv(list);
       }
+      invAmendPendingPicFront = null;
+      invAmendPendingPicBack = null;
       invEditingId = null;
       invExpandedIds[id] = true;
       renderInvList();
