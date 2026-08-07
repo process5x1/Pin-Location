@@ -550,14 +550,25 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #page-inventory .inv-header { margin-bottom: 1.5rem; }
 #page-inventory .inv-h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; color: var(--inv-text); }
 #page-inventory .inv-subtitle { font-size: 14px; color: var(--inv-text-muted); }
-#page-inventory .inv-tabs { display: flex; gap: 4px; border-bottom: 1.5px solid var(--inv-border); margin-bottom: 1.5rem; }
-#page-inventory .inv-tab {
-  font-family: inherit; font-size: 13px; font-weight: 600; color: var(--inv-text-muted);
-  background: none; border: none; padding: 10px 14px; cursor: pointer;
-  border-bottom: 2px solid transparent; margin-bottom: -1.5px; transition: color .15s, border-color .15s;
+#page-inventory .inv-home-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 1.5rem; }
+@media (max-width: 680px) { #page-inventory .inv-home-grid { grid-template-columns: 1fr; } }
+#page-inventory .inv-box {
+  background: var(--inv-surface); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius-lg);
+  padding: 22px 18px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 8px;
+  font-family: inherit; -webkit-appearance: none; transition: border-color .2s, box-shadow .2s, transform .18s;
 }
-#page-inventory .inv-tab:hover { color: var(--inv-text); }
-#page-inventory .inv-tab.active { color: var(--inv-text); border-bottom-color: var(--inv-accent); }
+#page-inventory .inv-box:hover { border-color: var(--inv-border-strong); box-shadow: 0 6px 20px rgba(0,0,0,.06); transform: translateY(-2px); }
+#page-inventory .inv-box-icon {
+  width: 40px; height: 40px; border-radius: 10px; background: var(--inv-bg);
+  display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1.5px solid var(--inv-border);
+}
+#page-inventory .inv-box-title { font-size: 15px; font-weight: 700; color: var(--inv-text); }
+#page-inventory .inv-box-desc { font-size: 12px; color: var(--inv-text-muted); line-height: 1.5; }
+#page-inventory .inv-back {
+  font-family: inherit; font-size: 12px; font-weight: 600; color: var(--inv-text-muted);
+  background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 1rem; display: block;
+}
+#page-inventory .inv-back:hover { color: var(--inv-text); }
 #page-inventory .inv-card {
   background: var(--inv-surface); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius-lg);
   padding: 1.25rem; margin-bottom: 1rem;
@@ -589,20 +600,21 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #page-inventory .inv-save-msg { font-size: 12px; color: var(--as-add-text, #15803d); }
 #page-inventory .inv-list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
 #page-inventory .inv-panel-count { font-size: 12px; color: var(--inv-text-faint); }
+#page-inventory .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
 #page-inventory .inv-item {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; flex-direction: column; gap: 8px;
   background: var(--inv-surface); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius-lg);
-  padding: 12px 14px; margin-bottom: 8px;
+  padding: 12px;
 }
-#page-inventory .inv-item-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: var(--inv-radius); border: 1.5px solid var(--inv-border); flex-shrink: 0; }
+#page-inventory .inv-item-thumb { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--inv-radius); border: 1.5px solid var(--inv-border); }
 #page-inventory .inv-item-thumb-empty {
-  width: 48px; height: 48px; border-radius: var(--inv-radius); border: 1.5px dashed var(--inv-border);
-  flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--inv-text-faint);
+  width: 100%; aspect-ratio: 1; border-radius: var(--inv-radius); border: 1.5px dashed var(--inv-border);
+  display: flex; align-items: center; justify-content: center; font-size: 26px; color: var(--inv-text-faint);
 }
 #page-inventory .inv-item-info { flex: 1; min-width: 0; }
-#page-inventory .inv-item-title { font-size: 14px; font-weight: 600; color: var(--inv-text); margin-bottom: 2px; }
-#page-inventory .inv-item-meta { font-size: 12px; color: var(--inv-text-muted); }
-#page-inventory .inv-empty { text-align: center; color: var(--inv-text-faint); font-size: 13px; padding: 2rem 1rem; line-height: 1.6; }
+#page-inventory .inv-item-title { font-size: 14px; font-weight: 600; color: var(--inv-text); margin-bottom: 2px; word-break: break-word; }
+#page-inventory .inv-item-meta { font-size: 12px; color: var(--inv-text-muted); line-height: 1.5; }
+#page-inventory .inv-empty { text-align: center; color: var(--inv-text-faint); font-size: 13px; padding: 2rem 1rem; line-height: 1.6; grid-column: 1 / -1; }
 </style>
 </head>
 <body>
@@ -911,14 +923,30 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <p class="inv-subtitle">Track publications on hand.</p>
     </div>
 
-    <div class="inv-tabs">
-      <button class="inv-tab active" data-inv-tab="add" onclick="showInvTab('add')">Add Publication</button>
-      <button class="inv-tab" data-inv-tab="list" onclick="showInvTab('list')">Inventory</button>
-      <button class="inv-tab" data-inv-tab="io" onclick="showInvTab('io')">Import/Export</button>
+    <!-- Section chooser -->
+    <div class="inv-home-grid" id="inv-panel-home">
+      <button class="inv-box" onclick="showInvSection('add')">
+        <div class="inv-box-icon">➕</div>
+        <div class="inv-box-title">Add Publication</div>
+        <div class="inv-box-desc">Add a new publication, with a photo if you have one.</div>
+      </button>
+
+      <button class="inv-box" onclick="showInvSection('list')">
+        <div class="inv-box-icon">📦</div>
+        <div class="inv-box-title">Inventory</div>
+        <div class="inv-box-desc">Browse everything you've added so far.</div>
+      </button>
+
+      <button class="inv-box" onclick="showInvSection('io')">
+        <div class="inv-box-icon">⇅</div>
+        <div class="inv-box-title">Import/Export</div>
+        <div class="inv-box-desc">Move your inventory to another device, photos included.</div>
+      </button>
     </div>
 
     <!-- Add Publication -->
-    <div class="inv-panel" id="inv-panel-add">
+    <div class="inv-panel" id="inv-panel-add" style="display:none;">
+      <button class="inv-back" onclick="showInvSection('home')">&larr; Back</button>
       <div class="inv-card">
         <label class="inv-label" for="inv-pic-input">Picture</label>
         <div class="inv-pic-row">
@@ -947,14 +975,16 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 
     <!-- Inventory list -->
     <div class="inv-panel" id="inv-panel-list" style="display:none;">
+      <button class="inv-back" onclick="showInvSection('home')">&larr; Back</button>
       <div class="inv-list-head">
         <span class="inv-panel-count" id="inv-count"></span>
       </div>
-      <div id="inv-list"></div>
+      <div class="inv-grid" id="inv-list"></div>
     </div>
 
     <!-- Import/Export -->
     <div class="inv-panel" id="inv-panel-io" style="display:none;">
+      <button class="inv-back" onclick="showInvSection('home')">&larr; Back</button>
       <div class="inv-card">
         <div class="inv-label">Export</div>
         <p class="inv-hint">Downloads a JSON file with all publications, including photos, so you can move your inventory to another device without retaking pictures.</p>
@@ -1759,8 +1789,8 @@ var invPendingPic = null;
 function loadInv() { try { return JSON.parse(localStorage.getItem(INV_KEY) || '[]'); } catch (e) { return []; } }
 function saveInv(list) { try { localStorage.setItem(INV_KEY, JSON.stringify(list)); } catch (e) {} }
 
-function showInvTab(name) {
-  document.querySelectorAll('.inv-tab').forEach(function(t) { t.classList.toggle('active', t.dataset.invTab === name); });
+function showInvSection(name) {
+  document.getElementById('inv-panel-home').style.display = name === 'home' ? '' : 'none';
   document.getElementById('inv-panel-add').style.display = name === 'add' ? '' : 'none';
   document.getElementById('inv-panel-list').style.display = name === 'list' ? '' : 'none';
   document.getElementById('inv-panel-io').style.display = name === 'io' ? '' : 'none';
@@ -1815,7 +1845,7 @@ function renderInvList() {
   var list = loadInv();
   var wrap = document.getElementById('inv-list');
   document.getElementById('inv-count').textContent = list.length + (list.length === 1 ? ' publication' : ' publications');
-  if (!list.length) { wrap.innerHTML = '<div class="inv-empty">No publications yet. Add one from the <strong>Add Publication</strong> tab.</div>'; return; }
+  if (!list.length) { wrap.innerHTML = '<div class="inv-empty">No publications yet. Go back and use <strong>Add Publication</strong>.</div>'; return; }
   wrap.innerHTML = '';
   list.forEach(function(entry) {
     var div = document.createElement('div');
