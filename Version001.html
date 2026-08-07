@@ -646,8 +646,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   position: fixed; inset: 0; z-index: 2000; background: #0a0a0a;
   overflow-y: auto; text-align: center; padding: 20px 16px;
 }
-#inv-camera-capture-view,
-#inv-count-review-view { width: 100%; }
+#inv-camera-capture-view { width: 100%; }
 .inv-camera-videowrap {
   position: relative; width: min(70vw, 280px); aspect-ratio: 3 / 4;
   border-radius: 10px; overflow: hidden; background: #111; margin: 0 auto 14px;
@@ -661,16 +660,6 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 .inv-camera-hint { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #cfcfcf; margin-bottom: 14px; }
 .inv-camera-controls { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; }
 .inv-camera-error { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ff8a7a; max-width: 320px; margin: 10px auto 0; }
-.inv-count-review-imgwrap {
-  position: relative; width: min(70vw, 280px); max-height: 40vh; overflow: hidden; border-radius: 10px;
-  background: #111; margin: 0 auto 14px;
-}
-.inv-count-review-imgwrap canvas { width: 100%; display: block; cursor: crosshair; touch-action: none; }
-.inv-count-review-result { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 14px; }
-.inv-count-review-number {
-  font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: #fff; min-width: 50px; text-align: center;
-}
-#inv-count-review-view .inv-camera-hint { max-width: 320px; margin-left: auto; margin-right: auto; }
 .inv-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 </style>
 </head>
@@ -1102,20 +1091,6 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <button class="inv-btn inv-btn-primary" onclick="invCaptureFromCamera()">Capture</button>
     </div>
     <div class="inv-camera-error" id="inv-camera-error" style="display:none;"></div>
-  </div>
-
-  <div id="inv-count-review-view" style="display:none;">
-    <div class="inv-count-review-imgwrap" id="inv-count-review-imgwrap"></div>
-    <div class="inv-count-review-result">
-      <button class="inv-btn" onclick="invAdjustCount(-1)">&minus;</button>
-      <span class="inv-count-review-number" id="inv-count-review-number">0</span>
-      <button class="inv-btn" onclick="invAdjustCount(1)">+</button>
-    </div>
-    <p class="inv-camera-hint" id="inv-count-review-hint">Detected lines are marked in red — this is an estimate. Adjust the number if any were missed or doubled up, then confirm.</p>
-    <div class="inv-camera-controls">
-      <button class="inv-btn" onclick="invRetakeCount()">Retake</button>
-      <button class="inv-btn inv-btn-primary" onclick="invConfirmCount()">Use this count</button>
-    </div>
   </div>
 </div>
 
@@ -1939,20 +1914,10 @@ invBindPicInput('inv-pic-back-input', 'inv-pic-back-preview', 'inv-pic-back-name
 var INV_GUIDE = { leftFrac: 0.08, topFrac: 0.06, wFrac: 0.84, hFrac: 0.88, boxAspect: 3 / 4 };
 var invCameraTarget = null;
 var invCameraStream = null;
-var invCountEntryId = null;
-var invCountValue = 0;
-var invCountMaxDetected = 0;
 
-var INV_CAMERA_HINTS = {
-  'count': 'Photograph the side of the stack, keeping it level within the frame'
-};
-
-function invOpenCamera(target, countEntryId) {
+function invOpenCamera(target) {
   invCameraTarget = target;
-  invCountEntryId = countEntryId || null;
-  document.getElementById('inv-camera-capture-view').style.display = '';
-  document.getElementById('inv-count-review-view').style.display = 'none';
-  document.getElementById('inv-camera-hint').textContent = INV_CAMERA_HINTS[target] || 'Line the publication up inside the yellow frame';
+  document.getElementById('inv-camera-hint').textContent = 'Line the publication up inside the yellow frame';
   var modal = document.getElementById('inv-camera-modal');
   var errEl = document.getElementById('inv-camera-error');
   errEl.style.display = 'none';
@@ -1977,12 +1942,12 @@ function invStopCameraStream() {
 function invCloseCamera() {
   invStopCameraStream();
   document.getElementById('inv-camera-modal').style.display = 'none';
-  document.getElementById('inv-count-review-imgwrap').innerHTML = '';
   invCameraTarget = null;
-  invCountEntryId = null;
 }
 
-function invCropGuideCanvas(video) {
+function invCaptureFromCamera() {
+  var video = document.getElementById('inv-camera-video');
+  if (!video.videoWidth) return;
   var videoAspect = video.videoWidth / video.videoHeight;
   var visibleW, visibleH, offsetX, offsetY;
   if (videoAspect > INV_GUIDE.boxAspect) {
@@ -2005,22 +1970,8 @@ function invCropGuideCanvas(video) {
   canvas.width = srcW;
   canvas.height = srcH;
   canvas.getContext('2d').drawImage(video, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
-  return canvas;
-}
-
-function invCaptureFromCamera() {
-  var video = document.getElementById('inv-camera-video');
-  if (!video.videoWidth) return;
-  var canvas = invCropGuideCanvas(video);
-
-  if (invCameraTarget === 'count') {
-    invStopCameraStream();
-    var result = invDetectStackLines(canvas);
-    invShowCountReview(canvas, result.peaks);
-    return;
-  }
-
   var dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+
   var target = invCameraTarget;
   var previewId = target === 'front' ? 'inv-pic-front-preview' : 'inv-pic-back-preview';
   var nameId = target === 'front' ? 'inv-pic-front-name' : 'inv-pic-back-name';
@@ -2033,109 +1984,6 @@ function invCaptureFromCamera() {
   invCloseCamera();
 }
 
-// ── Stack-count detection (estimate — always reviewable/adjustable) ──
-function invGrayRowProfile(canvas) {
-  var ctx = canvas.getContext('2d');
-  var w = canvas.width, h = canvas.height;
-  var data = ctx.getImageData(0, 0, w, h).data;
-  var profile = new Array(h);
-  var step = Math.max(1, Math.floor(w / 120));
-  for (var y = 0; y < h; y++) {
-    var sum = 0, n = 0;
-    for (var x = 0; x < w; x += step) {
-      var idx = (y * w + x) * 4;
-      sum += 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
-      n++;
-    }
-    profile[y] = sum / n;
-  }
-  return profile;
-}
-
-function invSmoothProfile(arr, radius) {
-  var out = new Array(arr.length);
-  for (var i = 0; i < arr.length; i++) {
-    var sum = 0, n = 0;
-    for (var k = -radius; k <= radius; k++) {
-      var j = i + k;
-      if (j >= 0 && j < arr.length) { sum += arr[j]; n++; }
-    }
-    out[i] = sum / n;
-  }
-  return out;
-}
-
-function invDetectStackLines(canvas) {
-  var raw = invGrayRowProfile(canvas);
-  var smoothed = invSmoothProfile(raw, 2);
-  var h = smoothed.length;
-  var mean = smoothed.reduce(function(a, b) { return a + b; }, 0) / h;
-  var variance = smoothed.reduce(function(a, b) { return a + (b - mean) * (b - mean); }, 0) / h;
-  var std = Math.sqrt(variance);
-  var minDistance = Math.max(4, Math.round(h * 0.015));
-  var minProminence = Math.max(4, std * 0.35);
-
-  var candidates = [];
-  for (var i = 1; i < h - 1; i++) {
-    if (smoothed[i] < smoothed[i - 1] && smoothed[i] <= smoothed[i + 1]) {
-      var win = Math.max(minDistance, 6);
-      var leftMax = smoothed[i], rightMax = smoothed[i];
-      for (var a = Math.max(0, i - win); a <= i; a++) leftMax = Math.max(leftMax, smoothed[a]);
-      for (var b = i; b <= Math.min(h - 1, i + win); b++) rightMax = Math.max(rightMax, smoothed[b]);
-      var prominence = Math.min(leftMax, rightMax) - smoothed[i];
-      if (prominence >= minProminence) candidates.push({ y: i, depth: prominence });
-    }
-  }
-  candidates.sort(function(a, b) { return b.depth - a.depth; });
-  var selected = [];
-  candidates.forEach(function(c) {
-    if (!selected.some(function(s) { return Math.abs(s.y - c.y) < minDistance; })) selected.push(c);
-  });
-  selected.sort(function(a, b) { return a.y - b.y; });
-  return { peaks: selected.map(function(s) { return s.y; }) };
-}
-
-function invShowCountReview(canvas, peaks) {
-  var ctx = canvas.getContext('2d');
-  ctx.strokeStyle = '#ff3b30';
-  ctx.lineWidth = Math.max(1, Math.round(canvas.width * 0.006));
-  peaks.forEach(function(y) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-  });
-
-  document.getElementById('inv-count-review-hint').textContent = 'Detected lines are marked in red — this is an estimate. Adjust the number if any were missed or doubled up, then confirm.';
-  document.getElementById('inv-camera-capture-view').style.display = 'none';
-  var reviewView = document.getElementById('inv-count-review-view');
-  reviewView.style.display = 'block';
-  var wrap = document.getElementById('inv-count-review-imgwrap');
-  wrap.innerHTML = '';
-  wrap.appendChild(canvas);
-
-  invCountValue = peaks.length;
-  invCountMaxDetected = peaks.length;
-  document.getElementById('inv-count-review-number').textContent = invCountValue;
-}
-
-function invAdjustCount(delta) {
-  invCountValue = Math.max(0, invCountValue + delta);
-  document.getElementById('inv-count-review-number').textContent = invCountValue;
-}
-
-function invRetakeCount() {
-  document.getElementById('inv-count-review-view').style.display = 'none';
-  invOpenCamera('count', invCountEntryId);
-}
-
-function invConfirmCount() {
-  if (invCountEntryId) {
-    var input = document.getElementById('inv-amend-count-' + invCountEntryId);
-    if (input) input.value = invCountValue;
-  }
-  invCloseCamera();
-}
 
 function addInvEntry() {
   var title = document.getElementById('inv-title-input').value.trim();
@@ -2229,7 +2077,6 @@ function renderInvItem(entry) {
       '<input type="date" class="inv-input" id="inv-amend-date-' + entry.id + '" value="' + escInv(entry.lastCounted || todayStr) + '">' +
       '<label class="inv-label">Count</label>' +
       '<input type="number" step="1" inputmode="numeric" class="inv-input" id="inv-amend-count-' + entry.id + '" value="' + (entry.count != null ? escInv(entry.count) : '') + '">' +
-      '<div class="inv-btn-row"><button class="inv-btn" data-count-photo="' + entry.id + '">Count from Photo</button></div>' +
       '<div class="inv-btn-row"><button class="inv-btn inv-btn-primary" data-amend-save="' + entry.id + '">Save</button>' +
       '<button class="inv-btn" data-amend-cancel="1">Cancel</button></div></div>';
     return div;
@@ -2305,9 +2152,6 @@ function renderInvList() {
   });
   wrap.querySelectorAll('[data-amend-start]').forEach(function(btn) {
     btn.addEventListener('click', function() { invEditingId = btn.dataset.amendStart; renderInvList(); });
-  });
-  wrap.querySelectorAll('[data-count-photo]').forEach(function(btn) {
-    btn.addEventListener('click', function() { invOpenCamera('count', btn.dataset.countPhoto); });
   });
   wrap.querySelectorAll('[data-amend-cancel]').forEach(function(btn) {
     btn.addEventListener('click', function() { invEditingId = null; renderInvList(); });
