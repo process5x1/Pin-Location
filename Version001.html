@@ -12,6 +12,20 @@
 :root {
   --bg: #f5f2eb; --ink: #1a1a2e; --card: #fff;
   --border: #d4cfc4; --accent: #ff5c35; --muted: #8c8880; --green: #27ae60;
+  --inv-bg: #f9f8f6;
+  --inv-surface: #ffffff;
+  --inv-border: #e2e0d8;
+  --inv-border-strong: #c8c6bc;
+  --inv-text: #1a1a18;
+  --inv-text-muted: #6b6a64;
+  --inv-text-faint: #9b9a94;
+  --inv-accent: #1a1a18;
+  --inv-accent-text: #ffffff;
+  --inv-remove-bg: #fff5f5;
+  --inv-remove-border: #fca5a5;
+  --inv-remove-text: #b91c1c;
+  --inv-radius: 8px;
+  --inv-radius-lg: 12px;
 }
 
 /* ── Page system ── */
@@ -532,20 +546,6 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem 1rem 4rem;
-  --inv-bg: #f9f8f6;
-  --inv-surface: #ffffff;
-  --inv-border: #e2e0d8;
-  --inv-border-strong: #c8c6bc;
-  --inv-text: #1a1a18;
-  --inv-text-muted: #6b6a64;
-  --inv-text-faint: #9b9a94;
-  --inv-accent: #1a1a18;
-  --inv-accent-text: #ffffff;
-  --inv-remove-bg: #fff5f5;
-  --inv-remove-border: #fca5a5;
-  --inv-remove-text: #b91c1c;
-  --inv-radius: 8px;
-  --inv-radius-lg: 12px;
 }
 #page-inventory .inv-header { margin-bottom: 1.5rem; }
 #page-inventory .inv-h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; color: var(--inv-text); }
@@ -593,19 +593,19 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #page-inventory .inv-file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 #page-inventory label.inv-btn { display: inline-flex; align-items: center; }
 #page-inventory .inv-file-name { font-size: 12px; color: var(--inv-text-muted); }
-#page-inventory .inv-btn-row { display: flex; align-items: center; gap: 10px; margin-top: 1.1rem; flex-wrap: wrap; }
-#page-inventory .inv-btn {
+.inv-btn-row { display: flex; align-items: center; gap: 10px; margin-top: 1.1rem; flex-wrap: wrap; }
+.inv-btn {
   font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer;
   border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius); background: var(--inv-surface);
   color: var(--inv-text); padding: 8px 14px; transition: border-color .15s, background .15s;
   -webkit-appearance: none;
 }
-#page-inventory .inv-btn:hover { border-color: var(--inv-border-strong); background: var(--inv-bg); }
-#page-inventory .inv-btn:active { transform: scale(0.98); }
-#page-inventory .inv-btn-primary { background: var(--inv-accent); color: var(--inv-accent-text); border-color: var(--inv-accent); }
-#page-inventory .inv-btn-primary:hover { opacity: 0.88; background: var(--inv-accent); }
-#page-inventory .inv-btn-remove { color: var(--inv-remove-text); border-color: var(--inv-remove-border); background: transparent; padding: 5px 10px; font-size: 12px; }
-#page-inventory .inv-btn-remove:hover { background: var(--inv-remove-bg); }
+.inv-btn:hover { border-color: var(--inv-border-strong); background: var(--inv-bg); }
+.inv-btn:active { transform: scale(0.98); }
+.inv-btn-primary { background: var(--inv-accent); color: var(--inv-accent-text); border-color: var(--inv-accent); }
+.inv-btn-primary:hover { opacity: 0.88; background: var(--inv-accent); }
+.inv-btn-remove { color: var(--inv-remove-text); border-color: var(--inv-remove-border); background: transparent; padding: 5px 10px; font-size: 12px; }
+.inv-btn-remove:hover { background: var(--inv-remove-bg); }
 #page-inventory .inv-save-msg { font-size: 12px; color: var(--as-add-text, #15803d); }
 #page-inventory .inv-list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
 #page-inventory .inv-panel-count { font-size: 12px; color: var(--inv-text-faint); }
@@ -638,42 +638,42 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #page-inventory .inv-history-row:last-child { border-bottom: none; }
 #page-inventory .inv-empty { text-align: center; color: var(--inv-text-faint); font-size: 13px; padding: 2rem 1rem; line-height: 1.6; grid-column: 1 / -1; }
 
-#page-inventory .inv-camera-modal {
+.inv-camera-modal {
   position: fixed; inset: 0; z-index: 2000; background: #0a0a0a;
   overflow-y: auto; text-align: center; padding: 20px 16px;
 }
-#page-inventory #inv-camera-capture-view,
-#page-inventory #inv-count-review-view,
-#page-inventory #inv-mark-view { width: 100%; }
-#page-inventory .inv-camera-videowrap {
+#inv-camera-capture-view,
+#inv-count-review-view,
+#inv-mark-view { width: 100%; }
+.inv-camera-videowrap {
   position: relative; width: min(70vw, 280px); aspect-ratio: 3 / 4;
   border-radius: 10px; overflow: hidden; background: #111; margin: 0 auto 14px;
 }
-#page-inventory #inv-camera-video { width: 100%; height: 100%; object-fit: cover; display: block; }
-#page-inventory .inv-camera-guide {
+#inv-camera-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.inv-camera-guide {
   position: absolute; left: 8%; top: 6%; right: 8%; bottom: 6%;
   border: 3px solid #ffd60a; border-radius: 6px; box-shadow: 0 0 0 9999px rgba(0,0,0,.5);
   pointer-events: none;
 }
-#page-inventory .inv-camera-hint { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #cfcfcf; margin-bottom: 14px; }
-#page-inventory .inv-camera-controls { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; }
-#page-inventory .inv-camera-error { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ff8a7a; max-width: 320px; margin: 10px auto 0; }
-#page-inventory .inv-count-review-imgwrap {
+.inv-camera-hint { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #cfcfcf; margin-bottom: 14px; }
+.inv-camera-controls { display: flex; justify-content: center; gap: 12px; margin-bottom: 10px; }
+.inv-camera-error { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ff8a7a; max-width: 320px; margin: 10px auto 0; }
+.inv-count-review-imgwrap {
   position: relative; width: min(70vw, 280px); max-height: 40vh; overflow: hidden; border-radius: 10px;
   background: #111; margin: 0 auto 14px;
 }
-#page-inventory .inv-count-review-imgwrap canvas { width: 100%; display: block; cursor: crosshair; touch-action: none; }
-#page-inventory .inv-count-review-result { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 14px; }
-#page-inventory .inv-count-review-number {
+.inv-count-review-imgwrap canvas { width: 100%; display: block; cursor: crosshair; touch-action: none; }
+.inv-count-review-result { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 14px; }
+.inv-count-review-number {
   font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: #fff; min-width: 50px; text-align: center;
 }
-#page-inventory #inv-count-review-view .inv-camera-hint,
-#page-inventory #inv-mark-view .inv-camera-hint { max-width: 320px; margin-left: auto; margin-right: auto; }
-#page-inventory .inv-mark-line {
+#inv-count-review-view .inv-camera-hint,
+#inv-mark-view .inv-camera-hint { max-width: 320px; margin-left: auto; margin-right: auto; }
+.inv-mark-line {
   position: absolute; left: 0; right: 0; height: 2px; background: #34c759;
   box-shadow: 0 0 0 1px rgba(0,0,0,.4); pointer-events: none;
 }
-#page-inventory .inv-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+.inv-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -1085,43 +1085,47 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       </div>
     </div>
   </div>
+</div>
 
-  <!-- Guided camera capture -->
-  <div class="inv-camera-modal" id="inv-camera-modal" style="display:none;">
-    <div id="inv-camera-capture-view">
-      <div class="inv-camera-videowrap" id="inv-camera-videowrap">
-        <video id="inv-camera-video" autoplay playsinline muted></video>
-        <div class="inv-camera-guide"></div>
-      </div>
-      <p class="inv-camera-hint" id="inv-camera-hint">Line the publication up inside the yellow frame</p>
-      <div class="inv-camera-controls">
-        <button class="inv-btn" onclick="invCloseCamera()">Cancel</button>
-        <button class="inv-btn inv-btn-primary" onclick="invCaptureFromCamera()">Capture</button>
-      </div>
-      <div class="inv-camera-error" id="inv-camera-error" style="display:none;"></div>
+<!-- Guided camera capture — kept OUTSIDE #page-inventory: the .page.active
+     rule applies a transform, and a transformed ancestor becomes the
+     containing block for position:fixed descendants, which broke this
+     modal's fixed positioning (it would render offset by the page's
+     scroll position instead of covering the real viewport). -->
+<div class="inv-camera-modal" id="inv-camera-modal" style="display:none;">
+  <div id="inv-camera-capture-view">
+    <div class="inv-camera-videowrap" id="inv-camera-videowrap">
+      <video id="inv-camera-video" autoplay playsinline muted></video>
+      <div class="inv-camera-guide"></div>
     </div>
-
-    <div id="inv-count-review-view" style="display:none;">
-      <div class="inv-count-review-imgwrap" id="inv-count-review-imgwrap"></div>
-      <div class="inv-count-review-result">
-        <button class="inv-btn" onclick="invAdjustCount(-1)">&minus;</button>
-        <span class="inv-count-review-number" id="inv-count-review-number">0</span>
-        <button class="inv-btn" onclick="invAdjustCount(1)">+</button>
-      </div>
-      <p class="inv-camera-hint" id="inv-count-review-hint">Detected lines are marked in red — this is an estimate. Adjust the number if any were missed or doubled up, then confirm.</p>
-      <div class="inv-camera-controls">
-        <button class="inv-btn" onclick="invRetakeCount()">Retake</button>
-        <button class="inv-btn inv-btn-primary" onclick="invConfirmCount()">Use this count</button>
-      </div>
+    <p class="inv-camera-hint" id="inv-camera-hint">Line the publication up inside the yellow frame</p>
+    <div class="inv-camera-controls">
+      <button class="inv-btn" onclick="invCloseCamera()">Cancel</button>
+      <button class="inv-btn inv-btn-primary" onclick="invCaptureFromCamera()">Capture</button>
     </div>
+    <div class="inv-camera-error" id="inv-camera-error" style="display:none;"></div>
+  </div>
 
-    <div id="inv-mark-view" style="display:none;">
-      <div class="inv-count-review-imgwrap" id="inv-mark-imgwrap"></div>
-      <p class="inv-camera-hint" id="inv-mark-hint">Tap the top edge</p>
-      <div class="inv-camera-controls">
-        <button class="inv-btn" onclick="invMarkReset()">Retry taps</button>
-        <button class="inv-btn inv-btn-primary" id="inv-mark-continue-btn" onclick="invMarkContinue()" disabled>Continue</button>
-      </div>
+  <div id="inv-count-review-view" style="display:none;">
+    <div class="inv-count-review-imgwrap" id="inv-count-review-imgwrap"></div>
+    <div class="inv-count-review-result">
+      <button class="inv-btn" onclick="invAdjustCount(-1)">&minus;</button>
+      <span class="inv-count-review-number" id="inv-count-review-number">0</span>
+      <button class="inv-btn" onclick="invAdjustCount(1)">+</button>
+    </div>
+    <p class="inv-camera-hint" id="inv-count-review-hint">Detected lines are marked in red — this is an estimate. Adjust the number if any were missed or doubled up, then confirm.</p>
+    <div class="inv-camera-controls">
+      <button class="inv-btn" onclick="invRetakeCount()">Retake</button>
+      <button class="inv-btn inv-btn-primary" onclick="invConfirmCount()">Use this count</button>
+    </div>
+  </div>
+
+  <div id="inv-mark-view" style="display:none;">
+    <div class="inv-count-review-imgwrap" id="inv-mark-imgwrap"></div>
+    <p class="inv-camera-hint" id="inv-mark-hint">Tap the top edge</p>
+    <div class="inv-camera-controls">
+      <button class="inv-btn" onclick="invMarkReset()">Retry taps</button>
+      <button class="inv-btn inv-btn-primary" id="inv-mark-continue-btn" onclick="invMarkContinue()" disabled>Continue</button>
     </div>
   </div>
 </div>
