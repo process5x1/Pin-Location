@@ -588,7 +588,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   padding-right: 34px;
 }
 #page-inventory .inv-hint { font-size: 12px; color: var(--inv-text-faint); line-height: 1.5; margin-top: 4px; }
-#page-inventory .inv-pic-row { display: flex; align-items: center; gap: 12px; }
+#page-inventory .inv-pic-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 #page-inventory .inv-pic-preview { width: 64px; height: 64px; object-fit: cover; border-radius: var(--inv-radius); border: 1.5px solid var(--inv-border); }
 #page-inventory .inv-file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 #page-inventory label.inv-btn { display: inline-flex; align-items: center; }
@@ -637,6 +637,25 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 }
 #page-inventory .inv-history-row:last-child { border-bottom: none; }
 #page-inventory .inv-empty { text-align: center; color: var(--inv-text-faint); font-size: 13px; padding: 2rem 1rem; line-height: 1.6; grid-column: 1 / -1; }
+
+#page-inventory .inv-camera-modal {
+  position: fixed; inset: 0; z-index: 2000; background: #0a0a0a;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  padding: 20px;
+}
+#page-inventory .inv-camera-videowrap {
+  position: relative; width: min(88vw, 420px); aspect-ratio: 3 / 4;
+  border-radius: 10px; overflow: hidden; background: #111;
+}
+#page-inventory #inv-camera-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+#page-inventory .inv-camera-guide {
+  position: absolute; left: 8%; top: 6%; right: 8%; bottom: 6%;
+  border: 3px solid #ffd60a; border-radius: 6px; box-shadow: 0 0 0 9999px rgba(0,0,0,.5);
+  pointer-events: none;
+}
+#page-inventory .inv-camera-hint { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #cfcfcf; text-align: center; }
+#page-inventory .inv-camera-controls { display: flex; gap: 12px; }
+#page-inventory .inv-camera-error { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ff8a7a; text-align: center; max-width: 320px; }
 </style>
 </head>
 <body>
@@ -972,16 +991,18 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <label class="inv-label" for="inv-pic-front-input">Front Cover</label>
         <div class="inv-pic-row">
           <img class="inv-pic-preview" id="inv-pic-front-preview" style="display:none;">
-          <input type="file" class="inv-file-input" id="inv-pic-front-input" accept="image/*" capture="environment">
-          <label class="inv-btn" for="inv-pic-front-input">Front Cover</label>
+          <button type="button" class="inv-btn inv-btn-primary" onclick="invOpenCamera('front')">Take Photo</button>
+          <input type="file" class="inv-file-input" id="inv-pic-front-input" accept="image/*">
+          <label class="inv-btn" for="inv-pic-front-input">Choose File</label>
           <span class="inv-file-name" id="inv-pic-front-name"></span>
         </div>
 
         <label class="inv-label" for="inv-pic-back-input">Back Cover</label>
         <div class="inv-pic-row">
           <img class="inv-pic-preview" id="inv-pic-back-preview" style="display:none;">
-          <input type="file" class="inv-file-input" id="inv-pic-back-input" accept="image/*" capture="environment">
-          <label class="inv-btn" for="inv-pic-back-input">Back Cover</label>
+          <button type="button" class="inv-btn inv-btn-primary" onclick="invOpenCamera('back')">Take Photo</button>
+          <input type="file" class="inv-file-input" id="inv-pic-back-input" accept="image/*">
+          <label class="inv-btn" for="inv-pic-back-input">Choose File</label>
           <span class="inv-file-name" id="inv-pic-back-name"></span>
         </div>
 
@@ -1021,7 +1042,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <div class="inv-list-head">
         <span class="inv-panel-count" id="inv-count"></span>
       </div>
-      <div class="inv-grid" id="inv-list"></div>
+      <div id="inv-list"></div>
     </div>
 
     <!-- Import/Export -->
@@ -1046,6 +1067,20 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       </div>
     </div>
   </div>
+
+  <!-- Guided camera capture -->
+  <div class="inv-camera-modal" id="inv-camera-modal" style="display:none;">
+    <div class="inv-camera-videowrap" id="inv-camera-videowrap">
+      <video id="inv-camera-video" autoplay playsinline muted></video>
+      <div class="inv-camera-guide"></div>
+    </div>
+    <p class="inv-camera-hint">Line the publication up inside the yellow frame</p>
+    <div class="inv-camera-controls">
+      <button class="inv-btn" onclick="invCloseCamera()">Cancel</button>
+      <button class="inv-btn inv-btn-primary" onclick="invCaptureFromCamera()">Capture</button>
+    </div>
+    <div class="inv-camera-error" id="inv-camera-error" style="display:none;"></div>
+  </div>
 </div>
 
 
@@ -1056,6 +1091,8 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 var mapsInitialised = { pinner: false, street: false };
 
 function showPage(name) {
+  var camModal = document.getElementById('inv-camera-modal');
+  if (camModal && camModal.style.display !== 'none') invCloseCamera();
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
   document.querySelectorAll('.nav-link').forEach(function(l) {
@@ -1861,6 +1898,79 @@ function invBindPicInput(inputId, previewId, nameId, setPending) {
 }
 invBindPicInput('inv-pic-front-input', 'inv-pic-front-preview', 'inv-pic-front-name', function(v) { invPendingPicFront = v; });
 invBindPicInput('inv-pic-back-input', 'inv-pic-back-preview', 'inv-pic-back-name', function(v) { invPendingPicBack = v; });
+
+// ── Guided camera capture ──
+var INV_GUIDE = { leftFrac: 0.08, topFrac: 0.06, wFrac: 0.84, hFrac: 0.88, boxAspect: 3 / 4 };
+var invCameraTarget = null;
+var invCameraStream = null;
+
+function invOpenCamera(target) {
+  invCameraTarget = target;
+  var modal = document.getElementById('inv-camera-modal');
+  var errEl = document.getElementById('inv-camera-error');
+  errEl.style.display = 'none';
+  modal.style.display = 'flex';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+    .then(function(stream) {
+      invCameraStream = stream;
+      var video = document.getElementById('inv-camera-video');
+      video.srcObject = stream;
+    })
+    .catch(function(err) {
+      errEl.textContent = 'Could not access camera (' + err.message + '). Use "Choose File" instead.';
+      errEl.style.display = 'block';
+    });
+}
+
+function invStopCameraStream() {
+  if (invCameraStream) { invCameraStream.getTracks().forEach(function(t) { t.stop(); }); invCameraStream = null; }
+  document.getElementById('inv-camera-video').srcObject = null;
+}
+
+function invCloseCamera() {
+  invStopCameraStream();
+  document.getElementById('inv-camera-modal').style.display = 'none';
+  invCameraTarget = null;
+}
+
+function invCaptureFromCamera() {
+  var video = document.getElementById('inv-camera-video');
+  if (!video.videoWidth) return;
+  var videoAspect = video.videoWidth / video.videoHeight;
+  var visibleW, visibleH, offsetX, offsetY;
+  if (videoAspect > INV_GUIDE.boxAspect) {
+    visibleH = video.videoHeight;
+    visibleW = video.videoHeight * INV_GUIDE.boxAspect;
+    offsetX = (video.videoWidth - visibleW) / 2;
+    offsetY = 0;
+  } else {
+    visibleW = video.videoWidth;
+    visibleH = video.videoWidth / INV_GUIDE.boxAspect;
+    offsetX = 0;
+    offsetY = (video.videoHeight - visibleH) / 2;
+  }
+  var srcX = offsetX + INV_GUIDE.leftFrac * visibleW;
+  var srcY = offsetY + INV_GUIDE.topFrac * visibleH;
+  var srcW = INV_GUIDE.wFrac * visibleW;
+  var srcH = INV_GUIDE.hFrac * visibleH;
+
+  var canvas = document.createElement('canvas');
+  canvas.width = srcW;
+  canvas.height = srcH;
+  canvas.getContext('2d').drawImage(video, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+  var dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+
+  var target = invCameraTarget;
+  var previewId = target === 'front' ? 'inv-pic-front-preview' : 'inv-pic-back-preview';
+  var nameId = target === 'front' ? 'inv-pic-front-name' : 'inv-pic-back-name';
+  var img = document.getElementById(previewId);
+  img.src = dataUrl;
+  img.style.display = '';
+  document.getElementById(nameId).textContent = 'Captured photo';
+  if (target === 'front') { invPendingPicFront = dataUrl; } else { invPendingPicBack = dataUrl; }
+
+  invCloseCamera();
+}
 
 function addInvEntry() {
   var title = document.getElementById('inv-title-input').value.trim();
