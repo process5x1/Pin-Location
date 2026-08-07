@@ -528,7 +528,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 ══════════════════════════════════════════════ */
 #page-inventory { overflow-y: auto; }
 #page-inventory .inv-wrap {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: 'IBM Plex Mono', monospace;
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem 1rem 4rem;
@@ -548,7 +548,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   --inv-radius-lg: 12px;
 }
 #page-inventory .inv-header { margin-bottom: 1.5rem; }
-#page-inventory .inv-h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; color: var(--inv-text); }
+#page-inventory .inv-h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; color: var(--inv-text); }
 #page-inventory .inv-subtitle { font-size: 14px; color: var(--inv-text-muted); }
 #page-inventory .inv-home-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 1.5rem; }
 @media (max-width: 680px) { #page-inventory .inv-home-grid { grid-template-columns: 1fr; } }
@@ -562,10 +562,10 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   width: 40px; height: 40px; border-radius: 10px; background: var(--inv-bg);
   display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1.5px solid var(--inv-border);
 }
-#page-inventory .inv-box-title { font-size: 15px; font-weight: 700; color: var(--inv-text); }
+#page-inventory .inv-box-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--inv-text); }
 #page-inventory .inv-box-desc { font-size: 12px; color: var(--inv-text-muted); line-height: 1.5; }
 #page-inventory .inv-back {
-  font-family: inherit; font-size: 12px; font-weight: 600; color: var(--inv-text-muted);
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--inv-text-muted);
   background: none; border: none; cursor: pointer; padding: 0; margin-bottom: 1rem; display: block;
 }
 #page-inventory .inv-back:hover { color: var(--inv-text); }
@@ -581,12 +581,21 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   padding: 9px 11px;
 }
 #page-inventory .inv-input:focus { outline: none; border-color: var(--inv-border-strong); }
+#page-inventory select.inv-input {
+  -webkit-appearance: none; appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%236b6a64' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5.5 8 10 12.5 14.5 8'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center; background-size: 14px;
+  padding-right: 34px;
+}
 #page-inventory .inv-hint { font-size: 12px; color: var(--inv-text-faint); line-height: 1.5; margin-top: 4px; }
 #page-inventory .inv-pic-row { display: flex; align-items: center; gap: 12px; }
 #page-inventory .inv-pic-preview { width: 64px; height: 64px; object-fit: cover; border-radius: var(--inv-radius); border: 1.5px solid var(--inv-border); }
+#page-inventory .inv-file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+#page-inventory label.inv-btn { display: inline-flex; align-items: center; }
+#page-inventory .inv-file-name { font-size: 12px; color: var(--inv-text-muted); }
 #page-inventory .inv-btn-row { display: flex; align-items: center; gap: 10px; margin-top: 1.1rem; flex-wrap: wrap; }
 #page-inventory .inv-btn {
-  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer;
   border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius); background: var(--inv-surface);
   color: var(--inv-text); padding: 8px 14px; transition: border-color .15s, background .15s;
   -webkit-appearance: none;
@@ -600,6 +609,11 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 #page-inventory .inv-save-msg { font-size: 12px; color: var(--as-add-text, #15803d); }
 #page-inventory .inv-list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
 #page-inventory .inv-panel-count { font-size: 12px; color: var(--inv-text-faint); }
+#page-inventory .inv-group-heading {
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--inv-text-muted);
+  text-transform: uppercase; letter-spacing: 0.07em; margin: 1.25rem 0 8px;
+}
+#page-inventory .inv-group-heading:first-child { margin-top: 0; }
 #page-inventory .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
 #page-inventory .inv-item {
   display: flex; flex-direction: column; gap: 8px;
@@ -612,7 +626,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   display: flex; align-items: center; justify-content: center; font-size: 26px; color: var(--inv-text-faint);
 }
 #page-inventory .inv-item-info { flex: 1; min-width: 0; }
-#page-inventory .inv-item-title { font-size: 14px; font-weight: 600; color: var(--inv-text); margin-bottom: 2px; word-break: break-word; }
+#page-inventory .inv-item-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--inv-text); margin-bottom: 2px; word-break: break-word; }
 #page-inventory .inv-item-meta { font-size: 12px; color: var(--inv-text-muted); line-height: 1.5; }
 #page-inventory .inv-empty { text-align: center; color: var(--inv-text-faint); font-size: 13px; padding: 2rem 1rem; line-height: 1.6; grid-column: 1 / -1; }
 </style>
@@ -933,8 +947,8 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 
       <button class="inv-box" onclick="showInvSection('list')">
         <div class="inv-box-icon">📦</div>
-        <div class="inv-box-title">Inventory</div>
-        <div class="inv-box-desc">Browse everything you've added so far.</div>
+        <div class="inv-box-title">View Current Inventory</div>
+        <div class="inv-box-desc">Browse everything you've added, and amend counts.</div>
       </button>
 
       <button class="inv-box" onclick="showInvSection('io')">
@@ -946,12 +960,21 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 
     <!-- Add Publication -->
     <div class="inv-panel" id="inv-panel-add" style="display:none;">
-      <button class="inv-back" onclick="showInvSection('home')">&larr; Back</button>
       <div class="inv-card">
-        <label class="inv-label" for="inv-pic-input">Picture</label>
+        <label class="inv-label" for="inv-pic-front-input">Front Cover</label>
         <div class="inv-pic-row">
-          <img class="inv-pic-preview" id="inv-pic-preview" style="display:none;">
-          <input type="file" id="inv-pic-input" accept="image/*" capture="environment">
+          <img class="inv-pic-preview" id="inv-pic-front-preview" style="display:none;">
+          <input type="file" class="inv-file-input" id="inv-pic-front-input" accept="image/*" capture="environment">
+          <label class="inv-btn" for="inv-pic-front-input">Front Cover</label>
+          <span class="inv-file-name" id="inv-pic-front-name"></span>
+        </div>
+
+        <label class="inv-label" for="inv-pic-back-input">Back Cover</label>
+        <div class="inv-pic-row">
+          <img class="inv-pic-preview" id="inv-pic-back-preview" style="display:none;">
+          <input type="file" class="inv-file-input" id="inv-pic-back-input" accept="image/*" capture="environment">
+          <label class="inv-btn" for="inv-pic-back-input">Back Cover</label>
+          <span class="inv-file-name" id="inv-pic-back-name"></span>
         </div>
 
         <label class="inv-label" for="inv-title-input">Title</label>
@@ -961,13 +984,24 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <input type="text" class="inv-input" id="inv-code-input" placeholder="Item code">
 
         <label class="inv-label" for="inv-volume-input">Volume</label>
-        <input type="text" class="inv-input" id="inv-volume-input" placeholder="e.g. Vol. 12">
+        <input type="number" step="1" inputmode="numeric" class="inv-input" id="inv-volume-input" placeholder="e.g. 12">
 
         <label class="inv-label" for="inv-lastcounted-input">Last counted</label>
         <input type="date" class="inv-input" id="inv-lastcounted-input">
 
+        <label class="inv-label" for="inv-category-input">Category</label>
+        <select class="inv-input" id="inv-category-input">
+          <option value="">Select category</option>
+          <option value="Brochure">Brochure</option>
+          <option value="Magazines">Magazines</option>
+          <option value="Book">Book</option>
+          <option value="Tracts">Tracts</option>
+          <option value="Contact Cards">Contact Cards</option>
+        </select>
+
         <div class="inv-btn-row">
           <button class="inv-btn inv-btn-primary" id="inv-add-btn" onclick="addInvEntry()">Add publication</button>
+          <button class="inv-btn" onclick="showInvSection('home')">&larr; Back</button>
           <span class="inv-save-msg" id="inv-save-msg"></span>
         </div>
       </div>
@@ -995,7 +1029,11 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <div class="inv-card">
         <div class="inv-label">Import</div>
         <p class="inv-hint">Choose a previously exported JSON file to add its publications here.</p>
-        <input type="file" accept="application/json" id="inv-import-input" onchange="importInv(this.files[0])">
+        <div class="inv-btn-row">
+          <input type="file" class="inv-file-input" accept="application/json" id="inv-import-input" onchange="document.getElementById('inv-import-name').textContent=this.files[0]?this.files[0].name:''; importInv(this.files[0])">
+          <label class="inv-btn" for="inv-import-input">Choose File</label>
+          <span class="inv-file-name" id="inv-import-name"></span>
+        </div>
         <span class="inv-save-msg" id="inv-import-msg"></span>
       </div>
     </div>
@@ -1784,7 +1822,8 @@ function initPinnerMap() {
 //  INVENTORY
 // ══════════════════════════════════════════════
 var INV_KEY = 'inv_publications_v1';
-var invPendingPic = null;
+var invPendingPicFront = null;
+var invPendingPicBack = null;
 
 function loadInv() { try { return JSON.parse(localStorage.getItem(INV_KEY) || '[]'); } catch (e) { return []; } }
 function saveInv(list) { try { localStorage.setItem(INV_KEY, JSON.stringify(list)); } catch (e) {} }
@@ -1797,30 +1836,40 @@ function showInvSection(name) {
   if (name === 'list') renderInvList();
 }
 
-document.getElementById('inv-pic-input').addEventListener('change', function() {
-  var file = this.files[0];
-  if (!file) { invPendingPic = null; document.getElementById('inv-pic-preview').style.display = 'none'; return; }
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    invPendingPic = e.target.result;
-    var img = document.getElementById('inv-pic-preview');
-    img.src = invPendingPic;
-    img.style.display = '';
-  };
-  reader.readAsDataURL(file);
-});
+function invBindPicInput(inputId, previewId, nameId, setPending) {
+  document.getElementById(inputId).addEventListener('change', function() {
+    var file = this.files[0];
+    document.getElementById(nameId).textContent = file ? file.name : '';
+    if (!file) { setPending(null); document.getElementById(previewId).style.display = 'none'; return; }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      setPending(e.target.result);
+      var img = document.getElementById(previewId);
+      img.src = e.target.result;
+      img.style.display = '';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+invBindPicInput('inv-pic-front-input', 'inv-pic-front-preview', 'inv-pic-front-name', function(v) { invPendingPicFront = v; });
+invBindPicInput('inv-pic-back-input', 'inv-pic-back-preview', 'inv-pic-back-name', function(v) { invPendingPicBack = v; });
 
 function addInvEntry() {
   var title = document.getElementById('inv-title-input').value.trim();
   var msg = document.getElementById('inv-save-msg');
   if (!title) { msg.textContent = 'Title is required.'; msg.style.color = 'var(--inv-remove-text, #b91c1c)'; return; }
+  var volumeRaw = document.getElementById('inv-volume-input').value.trim();
+  var volume = volumeRaw === '' ? '' : parseInt(volumeRaw, 10);
+  if (volumeRaw !== '' && (isNaN(volume) || String(volume) !== volumeRaw)) { msg.textContent = 'Volume must be a whole number.'; msg.style.color = 'var(--inv-remove-text, #b91c1c)'; return; }
   var entry = {
     id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-    picture: invPendingPic,
+    pictureFront: invPendingPicFront,
+    pictureBack: invPendingPicBack,
     title: title,
     code: document.getElementById('inv-code-input').value.trim(),
-    volume: document.getElementById('inv-volume-input').value.trim(),
-    lastCounted: document.getElementById('inv-lastcounted-input').value
+    volume: volume,
+    lastCounted: document.getElementById('inv-lastcounted-input').value,
+    category: document.getElementById('inv-category-input').value
   };
   var list = loadInv();
   list.unshift(entry);
@@ -1830,9 +1879,15 @@ function addInvEntry() {
   document.getElementById('inv-code-input').value = '';
   document.getElementById('inv-volume-input').value = '';
   document.getElementById('inv-lastcounted-input').value = '';
-  document.getElementById('inv-pic-input').value = '';
-  document.getElementById('inv-pic-preview').style.display = 'none';
-  invPendingPic = null;
+  document.getElementById('inv-category-input').value = '';
+  document.getElementById('inv-pic-front-input').value = '';
+  document.getElementById('inv-pic-front-name').textContent = '';
+  document.getElementById('inv-pic-front-preview').style.display = 'none';
+  document.getElementById('inv-pic-back-input').value = '';
+  document.getElementById('inv-pic-back-name').textContent = '';
+  document.getElementById('inv-pic-back-preview').style.display = 'none';
+  invPendingPicFront = null;
+  invPendingPicBack = null;
 
   msg.style.color = '';
   msg.textContent = 'Added "' + entry.title + '".';
@@ -1841,32 +1896,94 @@ function addInvEntry() {
 
 function escInv(s) { return String(s || '').replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
+var INV_CATEGORIES = ['Brochure', 'Magazines', 'Book', 'Tracts', 'Contact Cards'];
+var invEditingId = null;
+
+function renderInvItem(entry) {
+  var div = document.createElement('div');
+  div.className = 'inv-item';
+  var thumb = entry.pictureFront
+    ? '<img class="inv-item-thumb" src="' + entry.pictureFront + '">'
+    : '<div class="inv-item-thumb-empty">📦</div>';
+
+  if (entry.id === invEditingId) {
+    var todayStr = new Date().toISOString().slice(0, 10);
+    div.innerHTML = thumb +
+      '<div class="inv-item-info"><div class="inv-item-title">' + escInv(entry.title) + '</div>' +
+      '<label class="inv-label">New count date</label>' +
+      '<input type="date" class="inv-input" id="inv-amend-date-' + entry.id + '" value="' + escInv(entry.lastCounted || todayStr) + '">' +
+      '<label class="inv-label">Count</label>' +
+      '<input type="number" step="1" inputmode="numeric" class="inv-input" id="inv-amend-count-' + entry.id + '" value="' + (entry.count != null ? escInv(entry.count) : '') + '">' +
+      '<div class="inv-btn-row"><button class="inv-btn inv-btn-primary" data-amend-save="' + entry.id + '">Save</button>' +
+      '<button class="inv-btn" data-amend-cancel="1">Cancel</button></div></div>';
+    return div;
+  }
+
+  var meta = [];
+  if (entry.code) meta.push('Code: ' + escInv(entry.code));
+  if (entry.volume !== '' && entry.volume != null) meta.push('Vol: ' + escInv(entry.volume));
+  if (entry.count !== '' && entry.count != null) meta.push('Count: ' + escInv(entry.count));
+  if (entry.lastCounted) meta.push('Last counted: ' + escInv(entry.lastCounted));
+  div.innerHTML = thumb +
+    '<div class="inv-item-info"><div class="inv-item-title">' + escInv(entry.title) + '</div>' +
+    '<div class="inv-item-meta">' + (meta.join(' · ') || '—') + '</div></div>' +
+    '<div class="inv-btn-row">' +
+    '<button class="inv-btn" data-amend-start="' + entry.id + '">Amend</button>' +
+    '<button class="inv-btn inv-btn-remove" data-id="' + entry.id + '">Delete</button></div>';
+  return div;
+}
+
 function renderInvList() {
   var list = loadInv();
   var wrap = document.getElementById('inv-list');
   document.getElementById('inv-count').textContent = list.length + (list.length === 1 ? ' publication' : ' publications');
   if (!list.length) { wrap.innerHTML = '<div class="inv-empty">No publications yet. Go back and use <strong>Add Publication</strong>.</div>'; return; }
   wrap.innerHTML = '';
+
+  var groupOrder = INV_CATEGORIES.concat(['Uncategorized']);
+  var groups = {};
+  groupOrder.forEach(function(g) { groups[g] = []; });
   list.forEach(function(entry) {
-    var div = document.createElement('div');
-    div.className = 'inv-item';
-    var thumb = entry.picture
-      ? '<img class="inv-item-thumb" src="' + entry.picture + '">'
-      : '<div class="inv-item-thumb-empty">📦</div>';
-    var meta = [];
-    if (entry.code) meta.push('Code: ' + escInv(entry.code));
-    if (entry.volume) meta.push('Vol: ' + escInv(entry.volume));
-    if (entry.lastCounted) meta.push('Last counted: ' + escInv(entry.lastCounted));
-    div.innerHTML = thumb +
-      '<div class="inv-item-info"><div class="inv-item-title">' + escInv(entry.title) + '</div>' +
-      '<div class="inv-item-meta">' + (meta.join(' · ') || '—') + '</div></div>' +
-      '<button class="inv-btn inv-btn-remove" data-id="' + entry.id + '">Delete</button>';
-    wrap.appendChild(div);
+    var cat = INV_CATEGORIES.indexOf(entry.category) !== -1 ? entry.category : 'Uncategorized';
+    groups[cat].push(entry);
   });
-  wrap.querySelectorAll('.inv-btn-remove').forEach(function(btn) {
+
+  groupOrder.forEach(function(cat) {
+    if (!groups[cat].length) return;
+    var heading = document.createElement('div');
+    heading.className = 'inv-group-heading';
+    heading.textContent = cat + ' (' + groups[cat].length + ')';
+    wrap.appendChild(heading);
+    var grid = document.createElement('div');
+    grid.className = 'inv-grid';
+    groups[cat].forEach(function(entry) { grid.appendChild(renderInvItem(entry)); });
+    wrap.appendChild(grid);
+  });
+
+  wrap.querySelectorAll('[data-id]').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var list = loadInv().filter(function(e) { return e.id !== btn.dataset.id; });
       saveInv(list);
+      renderInvList();
+    });
+  });
+  wrap.querySelectorAll('[data-amend-start]').forEach(function(btn) {
+    btn.addEventListener('click', function() { invEditingId = btn.dataset.amendStart; renderInvList(); });
+  });
+  wrap.querySelectorAll('[data-amend-cancel]').forEach(function(btn) {
+    btn.addEventListener('click', function() { invEditingId = null; renderInvList(); });
+  });
+  wrap.querySelectorAll('[data-amend-save]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = btn.dataset.amendSave;
+      var dateVal = document.getElementById('inv-amend-date-' + id).value;
+      var countRaw = document.getElementById('inv-amend-count-' + id).value.trim();
+      var count = countRaw === '' ? '' : parseInt(countRaw, 10);
+      if (countRaw !== '' && (isNaN(count) || String(count) !== countRaw)) { alert('Count must be a whole number.'); return; }
+      var list = loadInv();
+      var entry = list.find(function(e) { return e.id === id; });
+      if (entry) { entry.lastCounted = dateVal; entry.count = count; saveInv(list); }
+      invEditingId = null;
       renderInvList();
     });
   });
