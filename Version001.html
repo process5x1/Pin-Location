@@ -1158,6 +1158,16 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           <span class="inv-save-msg" id="inv-trolley-save-msg"></span>
         </div>
       </div>
+      <div class="inv-card">
+        <div class="inv-label">Import Trolley</div>
+        <p class="inv-hint">Choose a previously exported trolley JSON file. Its poster and publications are added to your inventory as new entries, and the trolley is added below.</p>
+        <div class="inv-btn-row">
+          <input type="file" class="inv-file-input" accept="application/json" id="inv-trolley-import-input" onchange="document.getElementById('inv-trolley-import-name').textContent=this.files[0]?this.files[0].name:''; importTrolley(this.files[0])">
+          <label class="inv-btn" for="inv-trolley-import-input">Choose File</label>
+          <span class="inv-file-name" id="inv-trolley-import-name"></span>
+        </div>
+        <span class="inv-save-msg" id="inv-trolley-import-msg"></span>
+      </div>
       <div id="inv-trolley-list"></div>
     </div>
   </div>
@@ -2554,6 +2564,73 @@ function exportTrolley(trolleyId) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function invCreatePubFromBundle(pubData) {
+  return {
+    id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    pictureFront: pubData.pictureFront || null,
+    pictureBack: pubData.pictureBack || null,
+    title: pubData.title || 'Untitled',
+    code: pubData.code || '',
+    volume: pubData.volume != null ? pubData.volume : '',
+    lastCounted: '',
+    category: pubData.category || ''
+  };
+}
+
+function importTrolley(file) {
+  var msg = document.getElementById('inv-trolley-import-msg');
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var bundle;
+    try { bundle = JSON.parse(e.target.result); } catch (err) { msg.style.color = 'var(--inv-remove-text, #b91c1c)'; msg.textContent = 'Invalid JSON file.'; return; }
+    if (!bundle || typeof bundle.name !== 'string' || !Array.isArray(bundle.shelves)) {
+      msg.style.color = 'var(--inv-remove-text, #b91c1c)';
+      msg.textContent = 'Invalid trolley file.';
+      return;
+    }
+
+    var pubList = loadInv();
+    var newTrolley = {
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      name: bundle.name,
+      posterPubId: null,
+      slots: new Array(INV_TROLLEY_SHELVES * INV_TROLLEY_SLOTS_PER_SHELF).fill(null)
+    };
+
+    if (bundle.poster) {
+      var posterEntry = invCreatePubFromBundle(bundle.poster);
+      pubList.push(posterEntry);
+      newTrolley.posterPubId = posterEntry.id;
+    }
+
+    bundle.shelves.forEach(function(shelf, shelfIdx) {
+      if (!Array.isArray(shelf)) return;
+      shelf.forEach(function(cell, i) {
+        if (!cell || !cell.publication) return;
+        var entry = invCreatePubFromBundle(cell.publication);
+        pubList.push(entry);
+        var slotIdx = shelfIdx * INV_TROLLEY_SLOTS_PER_SHELF + i;
+        if (slotIdx < newTrolley.slots.length) {
+          newTrolley.slots[slotIdx] = { pubId: entry.id, qty: cell.qty || '' };
+        }
+      });
+    });
+
+    saveInv(pubList);
+    var trolleys = loadTrolleys();
+    trolleys.unshift(newTrolley);
+    saveTrolleys(trolleys);
+
+    msg.style.color = '';
+    msg.textContent = 'Imported "' + bundle.name + '".';
+    document.getElementById('inv-trolley-import-input').value = '';
+    document.getElementById('inv-trolley-import-name').textContent = '';
+    renderTrolleyList();
+  };
+  reader.readAsText(file);
 }
 
 function exportInv() {
