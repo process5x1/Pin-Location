@@ -2423,6 +2423,7 @@ function renderTrolleyList() {
     var open = trolley.id === invTrolleyOpenId;
     var html = '<div class="trolley-item-head"><span class="trolley-item-title">' + escInv(trolley.name) + '</span>' +
       '<div class="inv-btn-row" style="margin-top:0;"><button class="inv-btn" data-trolley-toggle="' + trolley.id + '">' + (open ? 'Hide' : 'Open') + '</button>' +
+      '<button class="inv-btn" data-trolley-export="' + trolley.id + '">Export</button>' +
       '<button class="inv-btn inv-btn-remove" data-trolley-delete="' + trolley.id + '">Delete</button></div></div>';
     if (open) {
       var shelvesHtml = '';
@@ -2468,6 +2469,9 @@ function renderTrolleyList() {
       renderTrolleyList();
     });
   });
+  wrap.querySelectorAll('[data-trolley-export]').forEach(function(btn) {
+    btn.addEventListener('click', function() { exportTrolley(btn.dataset.trolleyExport); });
+  });
   wrap.querySelectorAll('[data-trolley-poster-select]').forEach(function(sel) {
     sel.addEventListener('change', function() {
       var trolleyId = sel.dataset.trolleyPosterSelect;
@@ -2506,6 +2510,50 @@ function renderTrolleyList() {
       renderTrolleyList();
     });
   });
+}
+
+function invResolvePub(pubs, pubId) {
+  if (!pubId) return null;
+  var p = pubs.find(function(x) { return x.id === pubId; });
+  if (!p) return null;
+  return { title: p.title, code: p.code, volume: p.volume, category: p.category, pictureFront: p.pictureFront || null, pictureBack: p.pictureBack || null };
+}
+
+function exportTrolley(trolleyId) {
+  var trolleys = loadTrolleys();
+  var trolley = trolleys.find(function(t) { return t.id === trolleyId; });
+  if (!trolley) return;
+  var pubs = loadInv();
+
+  var bundle = {
+    name: trolley.name,
+    poster: invResolvePub(pubs, trolley.posterPubId),
+    shelves: []
+  };
+  for (var s = 0; s < INV_TROLLEY_SHELVES; s++) {
+    var shelf = [];
+    for (var i = 0; i < INV_TROLLEY_SLOTS_PER_SHELF; i++) {
+      var slotIdx = s * INV_TROLLEY_SLOTS_PER_SHELF + i;
+      var slot = trolley.slots[slotIdx];
+      var pubId = invSlotPubId(slot);
+      var qty = invSlotQty(slot);
+      var pub = invResolvePub(pubs, pubId);
+      shelf.push(pub ? { publication: pub, qty: qty } : null);
+    }
+    bundle.shelves.push(shelf);
+  }
+
+  var blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var safeName = (trolley.name || 'trolley').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+  var date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'trolley-' + safeName + '-' + date + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function exportInv() {
