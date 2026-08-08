@@ -680,9 +680,6 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
   text-transform: uppercase; letter-spacing: 0.06em; color: var(--inv-text-muted);
   margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1.5px dashed var(--inv-border);
 }
-#page-inventory .trolley-shelf-label {
-  font-size: 10px; color: var(--inv-text-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px;
-}
 #page-inventory .trolley-poster-board { margin-bottom: 14px; }
 #page-inventory .trolley-poster-img {
   width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px;
@@ -2389,7 +2386,7 @@ function invSlotQty(slot) {
 }
 
 function renderTrolleyShelf(trolley, pubs, shelfIdx) {
-  var html = '<div class="trolley-shelf-label">Shelf ' + (shelfIdx + 1) + '</div><div class="trolley-shelf">';
+  var html = '<div class="trolley-shelf">';
   for (var i = 0; i < INV_TROLLEY_SLOTS_PER_SHELF; i++) {
     var slotIdx = shelfIdx * INV_TROLLEY_SLOTS_PER_SHELF + i;
     var slot = trolley.slots[slotIdx];
