@@ -1094,6 +1094,15 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           <span class="inv-save-msg" id="inv-quickpick-book-msg"></span>
         </div>
 
+        <label class="inv-label" for="inv-quickpick-brochure-input">Quick Pick (Brochure)</label>
+        <select class="inv-input" id="inv-quickpick-brochure-input" onchange="invApplyQuickPickBrochure(this)">
+          <option value="">Choose a brochure, or fill in manually below…</option>
+        </select>
+        <div class="inv-btn-row">
+          <button type="button" class="inv-btn" onclick="addAllBrochureQuickPicks()">Add all 13 brochures</button>
+          <span class="inv-save-msg" id="inv-quickpick-brochure-msg"></span>
+        </div>
+
         <label class="inv-label" for="inv-title-input">Title</label>
         <input type="text" class="inv-input" id="inv-title-input" placeholder="Publication title">
 
@@ -2230,6 +2239,77 @@ function addAllBookQuickPicks() {
   msg.textContent = 'Added ' + added + ' book' + (added === 1 ? '' : 's') + (skipped ? ' (' + skipped + ' already in your inventory).' : '.');
   setTimeout(function() { if (msg.textContent.indexOf('Added') === 0) msg.textContent = ''; }, 4000);
 }
+
+var INV_BROCHURE_QUICKPICKS = [
+  { code: 'fg', title: 'Good News' },
+  { code: 'hf', title: 'Happy Family' },
+  { code: 'ld', title: 'Listen to God' },
+  { code: 'lf', title: 'Origin of Life' },
+  { code: 'lffi', title: 'Enjoy Life Forever! (Brochure)' },
+  { code: 'll', title: 'Listen and Live' },
+  { code: 'lmd', title: 'Love People' },
+  { code: 'mb', title: 'My Bible Lessons' },
+  { code: 'rj', title: 'Return to Jehovah' },
+  { code: 'rk', title: 'Real Faith' },
+  { code: 'th', title: 'Teaching' },
+  { code: 'wfg', title: 'Wisdom From the Gospels' },
+  { code: 'ypq', title: 'Questions' }
+];
+
+(function() {
+  var sel = document.getElementById('inv-quickpick-brochure-input');
+  INV_BROCHURE_QUICKPICKS.forEach(function(b) {
+    var opt = document.createElement('option');
+    opt.value = b.code;
+    opt.textContent = b.title + ' (' + b.code + ')';
+    sel.appendChild(opt);
+  });
+  var otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = 'Others';
+  sel.appendChild(otherOpt);
+})();
+
+function invApplyQuickPickBrochure(sel) {
+  if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
+  var pick = INV_BROCHURE_QUICKPICKS.find(function(b) { return b.code === sel.value; });
+  if (!pick) return;
+  document.getElementById('inv-title-input').value = pick.title;
+  document.getElementById('inv-code-input').value = pick.code;
+  document.getElementById('inv-category-input').value = 'Brochure';
+  sel.value = '';
+}
+
+function addAllBrochureQuickPicks() {
+  var msg = document.getElementById('inv-quickpick-brochure-msg');
+  var list = loadInv();
+  var existingCodes = {};
+  list.forEach(function(e) { if (e.code) existingCodes[e.code.trim().toLowerCase()] = true; });
+
+  var added = 0;
+  INV_BROCHURE_QUICKPICKS.forEach(function(pick) {
+    if (existingCodes[pick.code.toLowerCase()]) return;
+    list.unshift({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      pictureFront: null,
+      pictureBack: null,
+      title: pick.title,
+      code: pick.code,
+      volume: '',
+      lastCounted: '',
+      category: 'Brochure',
+      count: 0
+    });
+    added++;
+  });
+
+  saveInv(list);
+  var skipped = INV_BROCHURE_QUICKPICKS.length - added;
+  msg.style.color = '';
+  msg.textContent = 'Added ' + added + ' brochure' + (added === 1 ? '' : 's') + (skipped ? ' (' + skipped + ' already in your inventory).' : '.');
+  setTimeout(function() { if (msg.textContent.indexOf('Added') === 0) msg.textContent = ''; }, 4000);
+}
+
 var invEditingId = null;
 var invExpandedIds = {};
 var invAmendPendingPicFront = null;
