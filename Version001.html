@@ -1112,6 +1112,15 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           <span class="inv-save-msg" id="inv-quickpick-magazine-msg"></span>
         </div>
 
+        <label class="inv-label" for="inv-quickpick-card-input">Quick Pick (Contact Card)</label>
+        <select class="inv-input" id="inv-quickpick-card-input" onchange="invApplyQuickPickCard(this)">
+          <option value="">Choose a contact card, or fill in manually below…</option>
+        </select>
+        <div class="inv-btn-row">
+          <button type="button" class="inv-btn" onclick="addAllCardQuickPicks()">Add all 4 contact cards</button>
+          <span class="inv-save-msg" id="inv-quickpick-card-msg"></span>
+        </div>
+
         <label class="inv-label" for="inv-title-input">Title</label>
         <input type="text" class="inv-input" id="inv-title-input" placeholder="Publication title">
 
@@ -2405,6 +2414,67 @@ function addAllMagazineQuickPicks() {
   var skipped = INV_MAGAZINE_QUICKPICKS.length - added;
   msg.style.color = '';
   msg.textContent = 'Added ' + added + ' magazine' + (added === 1 ? '' : 's') + (skipped ? ' (' + skipped + ' already in your inventory).' : '.');
+  setTimeout(function() { if (msg.textContent.indexOf('Added') === 0) msg.textContent = ''; }, 4000);
+}
+
+var INV_CARD_QUICKPICKS = [
+  { code: 'jwcd1', title: 'Contact card for jw.org' },
+  { code: 'jwcd4', title: 'Contact card for jw.org' },
+  { code: 'jwcd9', title: 'Contact card for free Bible course' },
+  { code: 'jwcd10', title: 'Contact card for free Bible course' }
+];
+
+(function() {
+  var sel = document.getElementById('inv-quickpick-card-input');
+  INV_CARD_QUICKPICKS.forEach(function(b) {
+    var opt = document.createElement('option');
+    opt.value = b.code;
+    opt.textContent = b.title + ' (' + b.code + ')';
+    sel.appendChild(opt);
+  });
+  var otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = 'Others';
+  sel.appendChild(otherOpt);
+})();
+
+function invApplyQuickPickCard(sel) {
+  if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
+  var pick = INV_CARD_QUICKPICKS.find(function(b) { return b.code === sel.value; });
+  if (!pick) return;
+  document.getElementById('inv-title-input').value = pick.title;
+  document.getElementById('inv-code-input').value = pick.code;
+  document.getElementById('inv-category-input').value = 'Contact Cards';
+  sel.value = '';
+}
+
+function addAllCardQuickPicks() {
+  var msg = document.getElementById('inv-quickpick-card-msg');
+  var list = loadInv();
+  var existingCodes = {};
+  list.forEach(function(e) { if (e.code) existingCodes[e.code.trim().toLowerCase()] = true; });
+
+  var added = 0;
+  INV_CARD_QUICKPICKS.forEach(function(pick) {
+    if (existingCodes[pick.code.toLowerCase()]) return;
+    list.unshift({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      pictureFront: null,
+      pictureBack: null,
+      title: pick.title,
+      code: pick.code,
+      volume: '',
+      lastCounted: '',
+      category: 'Contact Cards',
+      count: 0
+    });
+    added++;
+  });
+
+  saveInv(list);
+  var skipped = INV_CARD_QUICKPICKS.length - added;
+  msg.style.color = '';
+  msg.textContent = 'Added ' + added + ' contact card' + (added === 1 ? '' : 's') + (skipped ? ' (' + skipped + ' already in your inventory).' : '.');
   setTimeout(function() { if (msg.textContent.indexOf('Added') === 0) msg.textContent = ''; }, 4000);
 }
 
