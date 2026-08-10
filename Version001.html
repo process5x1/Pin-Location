@@ -1121,6 +1121,15 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           <span class="inv-save-msg" id="inv-quickpick-card-msg"></span>
         </div>
 
+        <label class="inv-label" for="inv-quickpick-tract-input">Quick Pick (Tract)</label>
+        <select class="inv-input" id="inv-quickpick-tract-input" onchange="invApplyQuickPickTract(this)">
+          <option value="">Choose a tract, or fill in manually below…</option>
+        </select>
+        <div class="inv-btn-row">
+          <button type="button" class="inv-btn" onclick="addAllTractQuickPicks()">Add all 18 tracts</button>
+          <span class="inv-save-msg" id="inv-quickpick-tract-msg"></span>
+        </div>
+
         <label class="inv-label" for="inv-title-input">Title</label>
         <input type="text" class="inv-input" id="inv-title-input" placeholder="Publication title">
 
@@ -2475,6 +2484,81 @@ function addAllCardQuickPicks() {
   var skipped = INV_CARD_QUICKPICKS.length - added;
   msg.style.color = '';
   msg.textContent = 'Added ' + added + ' contact card' + (added === 1 ? '' : 's') + (skipped ? ' (' + skipped + ' already in your inventory).' : '.');
+  setTimeout(function() { if (msg.textContent.indexOf('Added') === 0) msg.textContent = ''; }, 4000);
+}
+
+var INV_TRACT_QUICKPICKS = [
+  { code: 'inv', title: 'Invitation to Congregation Meetings' },
+  { code: 'T-30', title: 'View the Bible' },
+  { code: 'T-31', title: 'View the Future' },
+  { code: 'T-32', title: 'Happy Family Life' },
+  { code: 'T-33', title: 'Who Controls the World?' },
+  { code: 'T-34', title: 'Will Suffering End?' },
+  { code: 'T-35', title: 'Live Again' },
+  { code: 'T-36', title: 'Kingdom' },
+  { code: 'T-37', title: 'Website tract' },
+  { code: 'T-dth', title: 'Death' },
+  { code: 'T-fam', title: 'Family' },
+  { code: 'T-ftr', title: 'The Future' },
+  { code: 'T-god', title: 'God' },
+  { code: 'T-jss', title: 'Jesus' },
+  { code: 'T-kng', title: "God's Kingdom" },
+  { code: 'T-pry', title: 'Prayer' },
+  { code: 'T-rlg', title: 'Religion' },
+  { code: 'T-sfr', title: 'Suffering' }
+];
+
+(function() {
+  var sel = document.getElementById('inv-quickpick-tract-input');
+  INV_TRACT_QUICKPICKS.forEach(function(b) {
+    var opt = document.createElement('option');
+    opt.value = b.code;
+    opt.textContent = b.title + ' (' + b.code + ')';
+    sel.appendChild(opt);
+  });
+  var otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = 'Others';
+  sel.appendChild(otherOpt);
+})();
+
+function invApplyQuickPickTract(sel) {
+  if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
+  var pick = INV_TRACT_QUICKPICKS.find(function(b) { return b.code === sel.value; });
+  if (!pick) return;
+  document.getElementById('inv-title-input').value = pick.title;
+  document.getElementById('inv-code-input').value = pick.code;
+  document.getElementById('inv-category-input').value = 'Tracts';
+  sel.value = '';
+}
+
+function addAllTractQuickPicks() {
+  var msg = document.getElementById('inv-quickpick-tract-msg');
+  var list = loadInv();
+  var existingCodes = {};
+  list.forEach(function(e) { if (e.code) existingCodes[e.code.trim().toLowerCase()] = true; });
+
+  var added = 0;
+  INV_TRACT_QUICKPICKS.forEach(function(pick) {
+    if (existingCodes[pick.code.toLowerCase()]) return;
+    list.unshift({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      pictureFront: null,
+      pictureBack: null,
+      title: pick.title,
+      code: pick.code,
+      volume: '',
+      lastCounted: '',
+      category: 'Tracts',
+      count: 0
+    });
+    added++;
+  });
+
+  saveInv(list);
+  var skipped = INV_TRACT_QUICKPICKS.length - added;
+  msg.style.color = '';
+  msg.textContent = 'Added ' + added + ' tract' + (added === 1 ? '' : 's') + (skipped ? ' (' + skipped + ' already in your inventory).' : '.');
   setTimeout(function() { if (msg.textContent.indexOf('Added') === 0) msg.textContent = ''; }, 4000);
 }
 
