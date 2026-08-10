@@ -1085,6 +1085,11 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           <span class="inv-file-name" id="inv-pic-back-name"></span>
         </div>
 
+        <label class="inv-label" for="inv-quickpick-book-input">Quick Pick (Book)</label>
+        <select class="inv-input" id="inv-quickpick-book-input" onchange="invApplyQuickPickBook(this)">
+          <option value="">Choose a book, or fill in manually below…</option>
+        </select>
+
         <label class="inv-label" for="inv-title-input">Title</label>
         <input type="text" class="inv-input" id="inv-title-input" placeholder="Publication title">
 
@@ -2150,6 +2155,47 @@ function addInvEntry() {
 function escInv(s) { return String(s || '').replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
 var INV_CATEGORIES = ['Brochure', 'Magazines', 'Book', 'Tracts', 'Contact Cards', 'Poster'];
+
+var INV_BOOK_QUICKPICKS = [
+  { code: 'be', title: 'Ministry School' },
+  { code: 'bhs', title: 'Teach Us' },
+  { code: 'bt', title: 'Bearing Witness' },
+  { code: 'cf', title: '"My Follower"' },
+  { code: 'ia', title: 'Imitate' },
+  { code: 'jy', title: 'Jesus—The Way' },
+  { code: 'kr', title: "God's Kingdom Rules!" },
+  { code: 'lfb', title: 'Learn From the Bible' },
+  { code: 'lff', title: 'Enjoy Life Forever! (Book)' },
+  { code: 'lr', title: 'Teacher' },
+  { code: 'od', title: 'Organized' },
+  { code: 'rr', title: 'Pure Worship' },
+  { code: 'scl', title: 'Scriptures for Christian Living' },
+  { code: 'wcg', title: 'Courage' }
+];
+
+(function() {
+  var sel = document.getElementById('inv-quickpick-book-input');
+  INV_BOOK_QUICKPICKS.forEach(function(b) {
+    var opt = document.createElement('option');
+    opt.value = b.code;
+    opt.textContent = b.title + ' (' + b.code + ')';
+    sel.appendChild(opt);
+  });
+  var otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = 'Others';
+  sel.appendChild(otherOpt);
+})();
+
+function invApplyQuickPickBook(sel) {
+  if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
+  var pick = INV_BOOK_QUICKPICKS.find(function(b) { return b.code === sel.value; });
+  if (!pick) return;
+  document.getElementById('inv-title-input').value = pick.title;
+  document.getElementById('inv-code-input').value = pick.code;
+  document.getElementById('inv-category-input').value = 'Book';
+  sel.value = '';
+}
 var invEditingId = null;
 var invExpandedIds = {};
 var invAmendPendingPicFront = null;
