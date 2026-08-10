@@ -607,14 +607,17 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
 .inv-btn-remove { color: var(--inv-remove-text); border-color: var(--inv-remove-border); background: transparent; }
 .inv-btn-remove:hover { background: var(--inv-remove-bg); }
 #page-inventory .inv-save-msg { font-size: 12px; color: var(--as-add-text, #15803d); }
-#page-inventory .inv-list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+#page-inventory .inv-list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 0.75rem; }
 #page-inventory .inv-panel-count { font-size: 12px; color: var(--inv-text-faint); }
+#page-inventory .inv-zoom-control { display: flex; align-items: center; gap: 6px; }
+#page-inventory .inv-zoom-label { font-size: 13px; color: var(--inv-text-faint); line-height: 1; }
+#page-inventory .inv-zoom-control input[type="range"] { width: 100px; accent-color: var(--inv-accent); cursor: pointer; }
 #page-inventory .inv-group-heading {
   font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--inv-text-muted);
   text-transform: uppercase; letter-spacing: 0.07em; margin: 1.25rem 0 8px;
 }
 #page-inventory .inv-group-heading:first-child { margin-top: 0; }
-#page-inventory .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+#page-inventory .inv-grid { display: grid; grid-template-columns: repeat(var(--inv-grid-cols, 2), 1fr); gap: 14px; }
 #page-inventory .inv-item {
   display: flex; flex-direction: column; gap: 8px;
   background: var(--inv-surface); border: 1.5px solid var(--inv-border); border-radius: var(--inv-radius-lg);
@@ -1166,6 +1169,11 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
       <button class="inv-back" onclick="showInvSection('home')">&larr; Back</button>
       <div class="inv-list-head">
         <span class="inv-panel-count" id="inv-count"></span>
+        <div class="inv-zoom-control">
+          <span class="inv-zoom-label">⊟</span>
+          <input type="range" id="inv-zoom-slider" min="1" max="4" step="1" value="2" oninput="invSetGridCols(this.value)">
+          <span class="inv-zoom-label">⊞</span>
+        </div>
       </div>
       <div id="inv-list"></div>
     </div>
@@ -2668,6 +2676,20 @@ function renderInvItem(entry) {
     btnRow;
   return div;
 }
+
+function invSetGridCols(n) {
+  document.documentElement.style.setProperty('--inv-grid-cols', n);
+  try { localStorage.setItem('inv_grid_cols', n); } catch (e) {}
+}
+
+(function() {
+  var saved = null;
+  try { saved = localStorage.getItem('inv_grid_cols'); } catch (e) {}
+  var val = saved || '2';
+  document.documentElement.style.setProperty('--inv-grid-cols', val);
+  var slider = document.getElementById('inv-zoom-slider');
+  if (slider) slider.value = val;
+})();
 
 function renderInvList() {
   var list = loadInv();
