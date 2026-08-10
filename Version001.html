@@ -2189,7 +2189,11 @@ function renderInvItem(entry) {
     var frontSrc = invAmendPendingPicFront || entry.pictureFront || '';
     var backSrc = invAmendPendingPicBack || entry.pictureBack || '';
     div.innerHTML = thumb +
-      '<div class="inv-item-info"><div class="inv-item-title">' + escInv(entry.title) + '</div>' +
+      '<div class="inv-item-info">' +
+      '<label class="inv-label">Title</label>' +
+      '<input type="text" class="inv-input" id="inv-amend-title-' + entry.id + '" value="' + escInv(entry.title) + '">' +
+      '<label class="inv-label">Code</label>' +
+      '<input type="text" class="inv-input" id="inv-amend-code-' + entry.id + '" value="' + escInv(entry.code) + '">' +
 
       '<label class="inv-label">Front Cover</label>' +
       '<div class="inv-pic-row">' +
@@ -2331,8 +2335,11 @@ function renderInvList() {
   wrap.querySelectorAll('[data-amend-save]').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var id = btn.dataset.amendSave;
+      var titleVal = document.getElementById('inv-amend-title-' + id).value.trim();
+      var codeVal = document.getElementById('inv-amend-code-' + id).value.trim();
       var dateVal = document.getElementById('inv-amend-date-' + id).value;
       var countRaw = document.getElementById('inv-amend-count-' + id).value.trim();
+      if (!titleVal) { alert('Title is required.'); return; }
       if (!dateVal) { alert('Date is required.'); return; }
       if (countRaw === '') { alert('Count is required.'); return; }
       var count = parseInt(countRaw, 10);
@@ -2340,6 +2347,8 @@ function renderInvList() {
       var list = loadInv();
       var entry = list.find(function(e) { return e.id === id; });
       if (entry) {
+        entry.title = titleVal;
+        entry.code = codeVal;
         if (invAmendPendingPicFront) entry.pictureFront = invAmendPendingPicFront;
         if (invAmendPendingPicBack) entry.pictureBack = invAmendPendingPicBack;
         entry.history = entry.history || [];
