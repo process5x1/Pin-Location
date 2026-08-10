@@ -1089,6 +1089,10 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         <select class="inv-input" id="inv-quickpick-book-input" onchange="invApplyQuickPickBook(this)">
           <option value="">Choose a book, or fill in manually below…</option>
         </select>
+        <div class="inv-btn-row">
+          <button type="button" class="inv-btn" onclick="addAllBookQuickPicks()">Add all 14 books</button>
+          <span class="inv-save-msg" id="inv-quickpick-book-msg"></span>
+        </div>
 
         <label class="inv-label" for="inv-title-input">Title</label>
         <input type="text" class="inv-input" id="inv-title-input" placeholder="Publication title">
@@ -2195,6 +2199,36 @@ function invApplyQuickPickBook(sel) {
   document.getElementById('inv-code-input').value = pick.code;
   document.getElementById('inv-category-input').value = 'Book';
   sel.value = '';
+}
+
+function addAllBookQuickPicks() {
+  var msg = document.getElementById('inv-quickpick-book-msg');
+  var list = loadInv();
+  var existingCodes = {};
+  list.forEach(function(e) { if (e.code) existingCodes[e.code.trim().toLowerCase()] = true; });
+
+  var added = 0;
+  INV_BOOK_QUICKPICKS.forEach(function(pick) {
+    if (existingCodes[pick.code.toLowerCase()]) return;
+    list.unshift({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      pictureFront: null,
+      pictureBack: null,
+      title: pick.title,
+      code: pick.code,
+      volume: '',
+      lastCounted: '',
+      category: 'Book',
+      count: 0
+    });
+    added++;
+  });
+
+  saveInv(list);
+  var skipped = INV_BOOK_QUICKPICKS.length - added;
+  msg.style.color = '';
+  msg.textContent = 'Added ' + added + ' book' + (added === 1 ? '' : 's') + (skipped ? ' (' + skipped + ' already in your inventory).' : '.');
+  setTimeout(function() { if (msg.textContent.indexOf('Added') === 0) msg.textContent = ''; }, 4000);
 }
 var invEditingId = null;
 var invExpandedIds = {};
