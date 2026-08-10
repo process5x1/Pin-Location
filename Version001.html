@@ -1145,6 +1145,15 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
         </div>
         <span class="inv-save-msg" id="inv-import-msg"></span>
       </div>
+      <div class="inv-card">
+        <div class="inv-label">Bulk Add Photos by Code</div>
+        <p class="inv-hint">Select multiple photos at once, each named after a publication's Code (e.g. "bhs.jpg" matches the entry with Code "bhs"). Matching photos are set as that entry's Front Cover.</p>
+        <div class="inv-btn-row">
+          <input type="file" class="inv-file-input" accept="image/*" multiple id="inv-bulk-photo-input" onchange="bulkAddPhotosByCode(this.files)">
+          <label class="inv-btn" for="inv-bulk-photo-input">Choose Photos</label>
+        </div>
+        <span class="inv-save-msg" id="inv-bulk-photo-msg"></span>
+      </div>
     </div>
 
     <!-- Trolley Arrangement -->
@@ -2681,6 +2690,50 @@ function importInv(file) {
     document.getElementById('inv-import-input').value = '';
   };
   reader.readAsText(file);
+}
+
+function invReadFileAsDataURL(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(e) { resolve(e.target.result); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function bulkAddPhotosByCode(fileList) {
+  var msg = document.getElementById('inv-bulk-photo-msg');
+  var files = Array.prototype.slice.call(fileList || []);
+  if (!files.length) return;
+  msg.style.color = '';
+  msg.textContent = 'Processing ' + files.length + ' photo' + (files.length === 1 ? '' : 's') + '…';
+
+  var list = loadInv();
+  var matchedCount = 0;
+  var unmatched = [];
+
+  var promises = files.map(function(file) {
+    var code = file.name.replace(/\.[^/.]+$/, '').trim().toLowerCase();
+    return invReadFileAsDataURL(file).then(function(dataUrl) {
+      var matches = list.filter(function(e) { return (e.code || '').trim().toLowerCase() === code; });
+      if (matches.length) {
+        matches.forEach(function(e) { e.pictureFront = dataUrl; });
+        matchedCount += matches.length;
+      } else {
+        unmatched.push(file.name);
+      }
+    });
+  });
+
+  Promise.all(promises).then(function() {
+    saveInv(list);
+    var summary = 'Matched ' + matchedCount + ' of ' + files.length + ' photo' + (files.length === 1 ? '' : 's') + '.';
+    if (unmatched.length) summary += ' No match for: ' + unmatched.join(', ') + '.';
+    msg.style.color = unmatched.length ? 'var(--inv-remove-text, #b91c1c)' : '';
+    msg.textContent = summary;
+    document.getElementById('inv-bulk-photo-input').value = '';
+    if (document.getElementById('inv-panel-list').style.display !== 'none') renderInvList();
+  });
 }
 
 // ══════════════════════════════════════════════
