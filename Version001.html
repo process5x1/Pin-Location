@@ -1238,6 +1238,7 @@ function showPage(name) {
   document.querySelectorAll('.nav-link').forEach(function(l) {
     l.classList.toggle('active', l.dataset.page === name);
   });
+  invPushHistory({ page: name });
   // Lazy-init maps when their page first opens
   if (name === 'pinner' && !mapsInitialised.pinner) { initPinnerMap(); mapsInitialised.pinner = true; }
   if (name === 'street' && !mapsInitialised.street) { initStreetMap(); mapsInitialised.street = true; }
@@ -1246,6 +1247,23 @@ function showPage(name) {
     if (name === 'street' && window._sfMap) window._sfMap.invalidateSize();
   }, 50);
 }
+
+// ── Back-button history: without this, every in-app "page" change is
+// invisible to the browser, so Android's back gesture has nothing to
+// step through and exits the app entirely on the first press. ──
+var _invSuppressHistory = false;
+function invPushHistory(state) {
+  if (_invSuppressHistory) return;
+  try { history.pushState(state, ''); } catch (e) {}
+}
+try { history.replaceState({ page: 'home' }, ''); } catch (e) {}
+window.addEventListener('popstate', function(e) {
+  _invSuppressHistory = true;
+  var state = e.state || { page: 'home' };
+  showPage(state.page || 'home');
+  if (state.page === 'inventory') showInvSection(state.section || 'home');
+  _invSuppressHistory = false;
+});
 
 // ══════════════════════════════════════════════
 //  SHARED HELPERS
@@ -2017,6 +2035,7 @@ function showInvSection(name) {
   document.getElementById('inv-panel-list').style.display = name === 'list' ? '' : 'none';
   document.getElementById('inv-panel-io').style.display = name === 'io' ? '' : 'none';
   document.getElementById('inv-panel-trolley').style.display = name === 'trolley' ? '' : 'none';
+  invPushHistory({ page: 'inventory', section: name });
   if (name === 'list') renderInvList();
   if (name === 'trolley') renderTrolleyList();
 }
