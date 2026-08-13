@@ -1133,6 +1133,15 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           <span class="inv-save-msg" id="inv-quickpick-tract-msg"></span>
         </div>
 
+        <label class="inv-label" for="inv-quickpick-bible-input">Quick Pick (Bible)</label>
+        <select class="inv-input" id="inv-quickpick-bible-input" onchange="invApplyQuickPickBible(this)">
+          <option value="">Choose a Bible, or fill in manually below…</option>
+        </select>
+        <div class="inv-btn-row">
+          <button type="button" class="inv-btn" onclick="addAllBibleQuickPicks()">Add all 1 Bible</button>
+          <span class="inv-save-msg" id="inv-quickpick-bible-msg"></span>
+        </div>
+
         <label class="inv-label" for="inv-title-input">Title</label>
         <input type="text" class="inv-input" id="inv-title-input" placeholder="Publication title">
 
@@ -1154,6 +1163,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           <option value="Tracts">Tracts</option>
           <option value="Contact Cards">Contact Cards</option>
           <option value="Poster">Poster</option>
+          <option value="Bibles">Bibles</option>
         </select>
 
         <div class="inv-btn-row">
@@ -2202,7 +2212,7 @@ function addInvEntry() {
 
 function escInv(s) { return String(s || '').replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
-var INV_CATEGORIES = ['Brochure', 'Magazines', 'Book', 'Tracts', 'Contact Cards', 'Poster'];
+var INV_CATEGORIES = ['Brochure', 'Magazines', 'Book', 'Tracts', 'Contact Cards', 'Poster', 'Bibles'];
 
 var INV_BOOK_QUICKPICKS = [
   { code: 'be', title: 'Ministry School' },
@@ -2567,6 +2577,64 @@ function addAllTractQuickPicks() {
   var skipped = INV_TRACT_QUICKPICKS.length - added;
   msg.style.color = '';
   msg.textContent = 'Added ' + added + ' tract' + (added === 1 ? '' : 's') + (skipped ? ' (' + skipped + ' already in your inventory).' : '.');
+  setTimeout(function() { if (msg.textContent.indexOf('Added') === 0) msg.textContent = ''; }, 4000);
+}
+
+var INV_BIBLE_QUICKPICKS = [
+  { code: 'nwt', title: 'New World Translation' }
+];
+
+(function() {
+  var sel = document.getElementById('inv-quickpick-bible-input');
+  INV_BIBLE_QUICKPICKS.forEach(function(b) {
+    var opt = document.createElement('option');
+    opt.value = b.code;
+    opt.textContent = b.title + ' (' + b.code + ')';
+    sel.appendChild(opt);
+  });
+  var otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = 'Others';
+  sel.appendChild(otherOpt);
+})();
+
+function invApplyQuickPickBible(sel) {
+  if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
+  var pick = INV_BIBLE_QUICKPICKS.find(function(b) { return b.code === sel.value; });
+  if (!pick) return;
+  document.getElementById('inv-title-input').value = pick.title;
+  document.getElementById('inv-code-input').value = pick.code;
+  document.getElementById('inv-category-input').value = 'Bibles';
+  sel.value = '';
+}
+
+function addAllBibleQuickPicks() {
+  var msg = document.getElementById('inv-quickpick-bible-msg');
+  var list = loadInv();
+  var existingCodes = {};
+  list.forEach(function(e) { if (e.code) existingCodes[e.code.trim().toLowerCase()] = true; });
+
+  var added = 0;
+  INV_BIBLE_QUICKPICKS.forEach(function(pick) {
+    if (existingCodes[pick.code.toLowerCase()]) return;
+    list.unshift({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+      pictureFront: null,
+      pictureBack: null,
+      title: pick.title,
+      code: pick.code,
+      volume: '',
+      lastCounted: '',
+      category: 'Bibles',
+      count: 0
+    });
+    added++;
+  });
+
+  saveInv(list);
+  var skipped = INV_BIBLE_QUICKPICKS.length - added;
+  msg.style.color = '';
+  msg.textContent = 'Added ' + added + ' Bible' + (added === 1 ? '' : 's') + (skipped ? ' (' + skipped + ' already in your inventory).' : '.');
   setTimeout(function() { if (msg.textContent.indexOf('Added') === 0) msg.textContent = ''; }, 4000);
 }
 
