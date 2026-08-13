@@ -1070,23 +1070,7 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
     <!-- Add Publication -->
     <div class="inv-panel" id="inv-panel-add" style="display:none;">
       <div class="inv-card">
-        <label class="inv-label" for="inv-pic-front-input">Front Cover</label>
-        <div class="inv-pic-row">
-          <img class="inv-pic-preview" id="inv-pic-front-preview" style="display:none;">
-          <button type="button" class="inv-btn inv-btn-primary" onclick="invOpenCamera('front')">Take Photo</button>
-          <input type="file" class="inv-file-input" id="inv-pic-front-input" accept="image/*">
-          <label class="inv-btn" for="inv-pic-front-input">Choose File</label>
-          <span class="inv-file-name" id="inv-pic-front-name"></span>
-        </div>
-
-        <label class="inv-label" for="inv-pic-back-input">Back Cover</label>
-        <div class="inv-pic-row">
-          <img class="inv-pic-preview" id="inv-pic-back-preview" style="display:none;">
-          <button type="button" class="inv-btn inv-btn-primary" onclick="invOpenCamera('back')">Take Photo</button>
-          <input type="file" class="inv-file-input" id="inv-pic-back-input" accept="image/*">
-          <label class="inv-btn" for="inv-pic-back-input">Choose File</label>
-          <span class="inv-file-name" id="inv-pic-back-name"></span>
-        </div>
+        <p class="inv-hint">Pick a publication below to add it right away (Count starts at 0). Add photos afterward via Bulk Add Photos by Code, or per item in Amend.</p>
 
         <label class="inv-label" for="inv-quickpick-book-input">Quick Pick (Book)</label>
         <select class="inv-input" id="inv-quickpick-book-input" onchange="invApplyQuickPickBook(this)">
@@ -1142,34 +1126,8 @@ button.secondary:hover { border-color: var(--ink); color: var(--ink); }
           <span class="inv-save-msg" id="inv-quickpick-bible-msg"></span>
         </div>
 
-        <label class="inv-label" for="inv-title-input">Title</label>
-        <input type="text" class="inv-input" id="inv-title-input" placeholder="Publication title">
-
-        <label class="inv-label" for="inv-code-input">Code</label>
-        <input type="text" class="inv-input" id="inv-code-input" placeholder="Item code">
-
-        <label class="inv-label" for="inv-volume-input">Volume</label>
-        <input type="number" step="1" inputmode="numeric" class="inv-input" id="inv-volume-input" placeholder="e.g. 12">
-
-        <label class="inv-label" for="inv-lastcounted-input">Last counted</label>
-        <input type="date" class="inv-input" id="inv-lastcounted-input">
-
-        <label class="inv-label" for="inv-category-input">Category</label>
-        <select class="inv-input" id="inv-category-input">
-          <option value="">Select category</option>
-          <option value="Brochure">Brochure</option>
-          <option value="Magazines">Magazines</option>
-          <option value="Book">Book</option>
-          <option value="Tracts">Tracts</option>
-          <option value="Contact Cards">Contact Cards</option>
-          <option value="Poster">Poster</option>
-          <option value="Bibles">Bibles</option>
-        </select>
-
         <div class="inv-btn-row">
-          <button class="inv-btn inv-btn-primary" id="inv-add-btn" onclick="addInvEntry()">Add publication</button>
           <button class="inv-btn" onclick="showInvSection('home')">&larr; Back</button>
-          <span class="inv-save-msg" id="inv-save-msg"></span>
         </div>
       </div>
     </div>
@@ -2049,8 +2007,6 @@ function initPinnerMap() {
 //  INVENTORY
 // ══════════════════════════════════════════════
 var INV_KEY = 'inv_publications_v1';
-var invPendingPicFront = null;
-var invPendingPicBack = null;
 
 function loadInv() { try { return JSON.parse(localStorage.getItem(INV_KEY) || '[]'); } catch (e) { return []; } }
 function saveInv(list) { try { localStorage.setItem(INV_KEY, JSON.stringify(list)); } catch (e) {} }
@@ -2064,24 +2020,6 @@ function showInvSection(name) {
   if (name === 'list') renderInvList();
   if (name === 'trolley') renderTrolleyList();
 }
-
-function invBindPicInput(inputId, previewId, nameId, setPending) {
-  document.getElementById(inputId).addEventListener('change', function() {
-    var file = this.files[0];
-    document.getElementById(nameId).textContent = file ? file.name : '';
-    if (!file) { setPending(null); document.getElementById(previewId).style.display = 'none'; return; }
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      setPending(e.target.result);
-      var img = document.getElementById(previewId);
-      img.src = e.target.result;
-      img.style.display = '';
-    };
-    reader.readAsDataURL(file);
-  });
-}
-invBindPicInput('inv-pic-front-input', 'inv-pic-front-preview', 'inv-pic-front-name', function(v) { invPendingPicFront = v; });
-invBindPicInput('inv-pic-back-input', 'inv-pic-back-preview', 'inv-pic-back-name', function(v) { invPendingPicBack = v; });
 
 // ── Guided camera capture ──
 var INV_GUIDE = { leftFrac: 0.08, topFrac: 0.06, wFrac: 0.84, hFrac: 0.88, boxAspect: 3 / 4 };
@@ -2148,18 +2086,10 @@ function invCaptureFromCamera() {
   var parts = invCameraTarget.split('|');
   var kind = parts[0];
   var entryId = parts[1];
-  var previewId, nameId;
-
-  if (kind === 'front' || kind === 'back') {
-    previewId = kind === 'front' ? 'inv-pic-front-preview' : 'inv-pic-back-preview';
-    nameId = kind === 'front' ? 'inv-pic-front-name' : 'inv-pic-back-name';
-    if (kind === 'front') { invPendingPicFront = dataUrl; } else { invPendingPicBack = dataUrl; }
-  } else {
-    var side = kind === 'amend-front' ? 'front' : 'back';
-    previewId = 'inv-amend-pic-' + side + '-preview-' + entryId;
-    nameId = 'inv-amend-pic-' + side + '-name-' + entryId;
-    if (side === 'front') { invAmendPendingPicFront = dataUrl; } else { invAmendPendingPicBack = dataUrl; }
-  }
+  var side = kind === 'amend-front' ? 'front' : 'back';
+  var previewId = 'inv-amend-pic-' + side + '-preview-' + entryId;
+  var nameId = 'inv-amend-pic-' + side + '-name-' + entryId;
+  if (side === 'front') { invAmendPendingPicFront = dataUrl; } else { invAmendPendingPicBack = dataUrl; }
 
   var img = document.getElementById(previewId);
   if (img) { img.src = dataUrl; img.style.display = ''; }
@@ -2170,44 +2100,31 @@ function invCaptureFromCamera() {
 }
 
 
-function addInvEntry() {
-  var title = document.getElementById('inv-title-input').value.trim();
-  var msg = document.getElementById('inv-save-msg');
-  if (!title) { msg.textContent = 'Title is required.'; msg.style.color = 'var(--inv-remove-text, #b91c1c)'; return; }
-  var volumeRaw = document.getElementById('inv-volume-input').value.trim();
-  var volume = volumeRaw === '' ? '' : parseInt(volumeRaw, 10);
-  if (volumeRaw !== '' && (isNaN(volume) || String(volume) !== volumeRaw)) { msg.textContent = 'Volume must be a whole number.'; msg.style.color = 'var(--inv-remove-text, #b91c1c)'; return; }
-  var entry = {
-    id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-    pictureFront: invPendingPicFront,
-    pictureBack: invPendingPicBack,
-    title: title,
-    code: document.getElementById('inv-code-input').value.trim(),
-    volume: volume,
-    lastCounted: document.getElementById('inv-lastcounted-input').value,
-    category: document.getElementById('inv-category-input').value
-  };
+function invQuickAddOne(pick, category, msgElId) {
+  var msg = document.getElementById(msgElId);
   var list = loadInv();
-  list.unshift(entry);
+  var exists = list.some(function(e) { return (e.code || '').trim().toLowerCase() === pick.code.toLowerCase(); });
+  if (exists) {
+    msg.style.color = '';
+    msg.textContent = '"' + pick.title + '" is already in your inventory.';
+    setTimeout(function() { msg.textContent = ''; }, 3000);
+    return;
+  }
+  list.unshift({
+    id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    pictureFront: null,
+    pictureBack: null,
+    title: pick.title,
+    code: pick.code,
+    volume: '',
+    lastCounted: '',
+    category: category,
+    count: 0
+  });
   saveInv(list);
-
-  document.getElementById('inv-title-input').value = '';
-  document.getElementById('inv-code-input').value = '';
-  document.getElementById('inv-volume-input').value = '';
-  document.getElementById('inv-lastcounted-input').value = '';
-  document.getElementById('inv-category-input').value = '';
-  document.getElementById('inv-pic-front-input').value = '';
-  document.getElementById('inv-pic-front-name').textContent = '';
-  document.getElementById('inv-pic-front-preview').style.display = 'none';
-  document.getElementById('inv-pic-back-input').value = '';
-  document.getElementById('inv-pic-back-name').textContent = '';
-  document.getElementById('inv-pic-back-preview').style.display = 'none';
-  invPendingPicFront = null;
-  invPendingPicBack = null;
-
   msg.style.color = '';
-  msg.textContent = 'Added "' + entry.title + '".';
-  setTimeout(function() { if (msg.textContent.indexOf(entry.title) !== -1) msg.textContent = ''; }, 3000);
+  msg.textContent = 'Added "' + pick.title + '".';
+  setTimeout(function() { if (msg.textContent.indexOf(pick.title) !== -1) msg.textContent = ''; }, 3000);
 }
 
 function escInv(s) { return String(s || '').replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -2249,9 +2166,7 @@ function invApplyQuickPickBook(sel) {
   if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
   var pick = INV_BOOK_QUICKPICKS.find(function(b) { return b.code === sel.value; });
   if (!pick) return;
-  document.getElementById('inv-title-input').value = pick.title;
-  document.getElementById('inv-code-input').value = pick.code;
-  document.getElementById('inv-category-input').value = 'Book';
+  invQuickAddOne(pick, 'Book', 'inv-quickpick-book-msg');
   sel.value = '';
 }
 
@@ -2319,9 +2234,7 @@ function invApplyQuickPickBrochure(sel) {
   if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
   var pick = INV_BROCHURE_QUICKPICKS.find(function(b) { return b.code === sel.value; });
   if (!pick) return;
-  document.getElementById('inv-title-input').value = pick.title;
-  document.getElementById('inv-code-input').value = pick.code;
-  document.getElementById('inv-category-input').value = 'Brochure';
+  invQuickAddOne(pick, 'Brochure', 'inv-quickpick-brochure-msg');
   sel.value = '';
 }
 
@@ -2408,9 +2321,7 @@ function invApplyQuickPickMagazine(sel) {
   if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
   var pick = INV_MAGAZINE_QUICKPICKS.find(function(b) { return b.code === sel.value; });
   if (!pick) return;
-  document.getElementById('inv-title-input').value = pick.title;
-  document.getElementById('inv-code-input').value = pick.code;
-  document.getElementById('inv-category-input').value = 'Magazines';
+  invQuickAddOne(pick, 'Magazines', 'inv-quickpick-magazine-msg');
   sel.value = '';
 }
 
@@ -2469,9 +2380,7 @@ function invApplyQuickPickCard(sel) {
   if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
   var pick = INV_CARD_QUICKPICKS.find(function(b) { return b.code === sel.value; });
   if (!pick) return;
-  document.getElementById('inv-title-input').value = pick.title;
-  document.getElementById('inv-code-input').value = pick.code;
-  document.getElementById('inv-category-input').value = 'Contact Cards';
+  invQuickAddOne(pick, 'Contact Cards', 'inv-quickpick-card-msg');
   sel.value = '';
 }
 
@@ -2544,9 +2453,7 @@ function invApplyQuickPickTract(sel) {
   if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
   var pick = INV_TRACT_QUICKPICKS.find(function(b) { return b.code === sel.value; });
   if (!pick) return;
-  document.getElementById('inv-title-input').value = pick.title;
-  document.getElementById('inv-code-input').value = pick.code;
-  document.getElementById('inv-category-input').value = 'Tracts';
+  invQuickAddOne(pick, 'Tracts', 'inv-quickpick-tract-msg');
   sel.value = '';
 }
 
@@ -2602,9 +2509,7 @@ function invApplyQuickPickBible(sel) {
   if (!sel.value || sel.value === '__other__') { sel.value = ''; return; }
   var pick = INV_BIBLE_QUICKPICKS.find(function(b) { return b.code === sel.value; });
   if (!pick) return;
-  document.getElementById('inv-title-input').value = pick.title;
-  document.getElementById('inv-code-input').value = pick.code;
-  document.getElementById('inv-category-input').value = 'Bibles';
+  invQuickAddOne(pick, 'Bibles', 'inv-quickpick-bible-msg');
   sel.value = '';
 }
 
