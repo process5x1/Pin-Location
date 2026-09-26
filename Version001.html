@@ -906,9 +906,9 @@ function initPinnerMap() {
     var sortedUnique=[],MAX=200,pins=[],selectedAddrs={},assignedAddrs={};window._pinnerPins=pins;
     var COLORS=['#ff5c35','#1a8a3a','#2980b9','#8e44ad','#e67e22','#16a085','#c0392b','#2471a3','#6c3483','#d35400','#1abc9c','#2c3e50','#e74c3c','#1a5276','#7d6608','#6c5ce7','#00b894','#e91e63','#0288d1','#558b2f','#ff5c35','#1a8a3a','#2980b9','#8e44ad','#e67e22','#16a085','#c0392b','#2471a3','#6c3483','#d35400','#1abc9c','#2c3e50','#e74c3c','#1a5276','#7d6608','#6c5ce7','#00b894','#e91e63','#0288d1','#558b2f','#ff5c35','#1a8a3a','#2980b9','#8e44ad','#e67e22','#16a085','#c0392b','#2471a3','#6c3483','#d35400'];
 
-    var map=L.map('mapEl',{attributionControl:false,zoomControl:true});
+    var map=L.map('mapEl',{attributionControl:true,zoomControl:true});
     window._pinnerMap=map;
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=cb1_3zfs_1_cb3d8efdb72da65d6e589f20',{attribution:'&copy; OpenStreetMap contributors &copy; CARTO',maxZoom:19}).addTo(map);
     map.setView([54.5,-3],5);
     setTimeout(function(){map.invalidateSize();},250);
     window.addEventListener('resize',function(){map.invalidateSize();});
@@ -1620,9 +1620,9 @@ function initPinnerMap() {
 // ══════════════════════════════════════════════
 function initStreetMap() {
   (function(){
-    var map = L.map('sfMapEl', {attributionControl: false, zoomControl: true});
+    var map = L.map('sfMapEl', {attributionControl: true, zoomControl: true});
     window._sfMap = map;
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {maxZoom:19}).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=cb1_3zfs_1_cb3d8efdb72da65d6e589f20', {attribution:'&copy; OpenStreetMap contributors &copy; CARTO',maxZoom:19}).addTo(map);
     map.setView([54.5, -3], 5);
     setTimeout(function(){ map.invalidateSize(); }, 250);
     window.addEventListener('resize', function(){ map.invalidateSize(); });
